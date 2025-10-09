@@ -2,7 +2,7 @@
 "use client";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
-import { IconPhoneFilled, IconMailFilled, IconId } from "@tabler/icons-react";
+import { IconPhoneFilled, IconMailFilled } from "@tabler/icons-react";
 import React, { useState } from "react";
 
 export default function Page() {
