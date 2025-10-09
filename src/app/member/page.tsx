@@ -38,20 +38,12 @@ export default function Page() {
               htmlFor="requestTaxInvoice"
               className="text-lg cursor-pointer"
             >
-              ขอใบกำกับภาษี
+              ขอใบเสร็จรับเงิน
             </label>
           </div>
 
           {requestTaxInvoice && (
             <div className="flex flex-col gap-3">
-              <div className="text-2xl">ข้อมูลใบกำกับภาษี</div>
-              <div className="text-xl">เลขบัตรประชาชน*</div>
-              <Input
-                type="text"
-                inputMode="numeric"
-                icon={<IconId />}
-                placeholder="เลขบัตรประชาชน"
-              />
               <div className="text-xl">อีเมล*</div>
               <Input
                 type="email"
