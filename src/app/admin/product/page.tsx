@@ -1,11 +1,29 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
+import { useHelperContext } from "@/components/providers/helper-provider";
+import { isErrorResponse } from "@/types/request";
 import { IconSearch } from "@tabler/icons-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 export default function Page() {
+  const { backendClient, setFullLoading } = useHelperContext()();
   const [searchText, setSearchText] = useState("");
+
+  useEffect(() => {
+    fetchProduct();
+  }, []);
+
+  const fetchProduct = async () => {
+    setFullLoading(true);
+    const response = await backendClient.listProduct(10, "", "all", searchText);
+    setFullLoading(false);
+    if (isErrorResponse(response)) {
+      return;
+    }
+  };
+
   return (
     <div className="px-4 py-6">
       <div className="flex justify-between items-center mb-5">
