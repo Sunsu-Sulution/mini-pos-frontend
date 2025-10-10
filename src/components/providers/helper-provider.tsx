@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
 import { BackendClient } from "@/lib/request";
@@ -46,31 +47,34 @@ export function HelperProvider({ children }: { children: ReactNode }) {
   const setAlert = useAlertContext();
   const setFullLoading = useFullLoadingContext();
   const router = useRouter();
-  const [userData] = useState<User>(initUser());
+  const [userData, setUserData] = useState<User>(initUser());
   const [title, setTitle] = useState<string>("");
 
   useEffect(() => {
     const fetchUserData = async () => {
       const backendClient = new BackendClient(setAlert);
       const response = await backendClient.getUserInfo();
-        const isError = isErrorResponse(response);
-        if (isError) {
-          return;
+      setFullLoading(true);
+      const isError = isErrorResponse(response);
+      if (isError) {
+        return;
+      }
+      setFullLoading(false);
+
+      if (window.location.pathname === "/") {
+        if (response.id !== "") {
+          if (response.role === "admin") {
+            router.push("/admin");
+          } else {
+            router.push("/main");
+          }
         }
-      //   if (window.location.pathname === "/") {
-      //     if (response.id !== "") {
-      //       router.push("/dashboard");
-      //     } else {
-      //       router.push("/login");
-      //     }
-      //   } else if (window.location.pathname === "/login") {
-      //     if (response.id !== "") {
-      //       router.push("/dashboard");
-      //     }
-      //   } else if (response.id === "") {
-      //     router.push("/login");
-      //   }
-      //   setUserData(response);
+      } else {
+        if (response.id === "") {
+          router.push("/");
+        }
+      }
+      setUserData(response);
     };
 
     fetchUserData();

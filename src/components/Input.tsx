@@ -1,9 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { HTMLInputTypeAttribute, useRef, ReactNode } from "react";
 
 interface InputProp {
   placeholder?: string;
   type: HTMLInputTypeAttribute;
+  value: any;
+  onChange: (value: any) => void;
   className?: string;
   icon?: ReactNode;
   inputMode?:
@@ -24,6 +27,8 @@ export default function Input({
   icon,
   className,
   inputMode,
+  value,
+  onChange,
 }: InputProp) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -38,6 +43,8 @@ export default function Input({
     >
       {icon}
       <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
         type={type}
         inputMode={inputMode}
         ref={inputRef}

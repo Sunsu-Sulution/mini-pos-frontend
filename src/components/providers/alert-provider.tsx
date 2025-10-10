@@ -29,7 +29,7 @@ export function AlertDialogComponent({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000050]"
+      className="fixed top-0 left-0 w-full h-screen z-40 flex items-center justify-center bg-[#00000050]"
       onClick={() => {
         if (canCancel) onCancel();
       }}

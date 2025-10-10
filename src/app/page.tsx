@@ -2,9 +2,29 @@
 /* eslint-disable @next/next/no-img-element */
 import Button from "@/components/Button";
 import Input from "@/components/Input";
+import { useHelperContext } from "@/components/providers/helper-provider";
+import { isErrorResponse } from "@/types/request";
 import { IconUserFilled, IconLockFilled } from "@tabler/icons-react";
+import { useState } from "react";
 
 export default function Page() {
+  const { setFullLoading, backendClient } = useHelperContext()();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+
+  const onLogin = async () => {
+    setFullLoading(true);
+    const response = await backendClient.login({
+      username,
+      password,
+    });
+    setFullLoading(false);
+    if (isErrorResponse(response)) {
+      return;
+    }
+    window.location.reload();
+  };
+
   return (
     <div className="px-10 pt-20">
       <div className="flex justify-center mb-12">
@@ -12,11 +32,15 @@ export default function Page() {
       </div>
       <div className="text-4xl mb-6">เข้าสู่ระบบ</div>
       <Input
+        value={username}
+        onChange={setUsername}
         placeholder="ชื่อผู้ใช้งาน"
         type="text"
         icon={<IconUserFilled />}
       />
       <Input
+        value={password}
+        onChange={setPassword}
         className="mt-8"
         placeholder="รหัสผ่าน"
         type="password"
@@ -25,9 +49,8 @@ export default function Page() {
       <Button
         className="mt-10"
         text="เข้าสู่ระบบ"
-        onClick={() => {
-          window.location.href = "/main";
-        }}
+        disabled={username === "" || password === ""}
+        onClick={onLogin}
         icon={<img src="/icon-bearhouse-1.png" alt="icon" />}
       />
     </div>

@@ -24,7 +24,7 @@ export default function Button({
           disabled
             ? "bg-gray-500 cursor-not-allowed"
             : "bg-text-primary cursor-pointer"
-        }  h-12 rounded-xl text-white flex justify-center items-center text-xl relative shadow-md ${className}`}
+        } z-0 h-12 rounded-xl text-white flex justify-center items-center text-xl relative shadow-md ${className}`}
       >
         {text}
         {icon && (

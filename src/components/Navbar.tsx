@@ -1,5 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
+"use client";
 import React from "react";
+import { useHelperContext } from "./providers/helper-provider";
 
 const navbars = [
   {
@@ -19,22 +21,46 @@ const navbars = [
   },
 ];
 
+const adminNavbars = [
+  {
+    text: "ยอดขาย",
+    route: "/admin",
+    icon: <img src="/icon-bearhouse-2.png" className="h-7" alt="branch" />,
+  },
+  {
+    text: "สินค้า",
+    route: "/admin/product",
+    icon: <img src="/icon-bearhouse-4.png" className="h-7" alt="order" />,
+  },
+  {
+    text: "สาขา",
+    route: "/admin/branch",
+    icon: <img src="/icon-bearhouse-3.png" className="h-7" alt="branch" />,
+  },
+  {
+    text: "ผู้ใช้งาน",
+    route: "/admin/user",
+    icon: <img src="/icon-bearhouse-1.png" className="h-7" alt="summary" />,
+  },
+];
+
 export default function Navbar() {
+  const { userData } = useHelperContext()();
   return (
     <>
-    <div className="h-30"></div>
-    <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 bg-white select-none w-[100vw] md:w-[600px] flex justify-around pt-4 pb-3 shadow-2xl">
-      {navbars.map((navbar) => (
-        <a
-          href={navbar.route}
-          key={navbar.route}
-          className="flex flex-col justify-center items-center gap-1"
-        >
-          {navbar.icon}
-          <div className="text-md">{navbar.text}</div>
-        </a>
-      ))}
-    </div>
+      <div className="h-30"></div>
+      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 bg-white select-none w-[100vw] md:w-[600px] flex justify-around pt-4 pb-3 shadow-2xl">
+        {(userData.role === "admin" ? adminNavbars : navbars).map((navbar) => (
+          <a
+            href={navbar.route}
+            key={navbar.route}
+            className="flex flex-col justify-center items-center gap-1"
+          >
+            {navbar.icon}
+            <div className="text-md">{navbar.text}</div>
+          </a>
+        ))}
+      </div>
     </>
   );
 }

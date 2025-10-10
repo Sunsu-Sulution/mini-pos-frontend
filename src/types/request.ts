@@ -8,7 +8,7 @@ export const isErrorResponse = (data: any): data is ErrorResponse => {
 };
 
 export interface LoginRequest {
-    email: string;
+    username: string;
     password: string;
 }
 

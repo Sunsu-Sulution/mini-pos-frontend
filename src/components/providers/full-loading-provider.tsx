@@ -7,13 +7,21 @@ import {
   useContext,
   useState,
 } from "react";
+import Image from "next/image";
 
 const FullLoadingContext = createContext((value: boolean) => value);
 
 function FullLoading() {
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="w-12 h-12 border-4 border-gray-300 border-t-text-primary rounded-full animate-spin"></div>
+    <div className="fixed inset-0 flex items-center justify-center bg-[#00000050] bg-opacity-50 z-50">
+      <Image
+        src="/logo.png"
+        alt="Loading"
+        width={60}
+        height={60}
+        className="animate-spin [animation-direction:reverse]"
+        priority
+      />
     </div>
   );
 }
