@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import { getItem, removeItem, setItem } from "./storage";
-import { ErrorResponse, initUser, LoginRequest, LoginResponse, User } from "@/types/request";
+import { AddProductRequest, ErrorResponse, initUser, LoginRequest, LoginResponse, Pagination, Product, UploadFileResponse, User } from "@/types/request";
 
 const handlerError = (
     error: unknown,
@@ -143,6 +143,73 @@ export class BackendClient {
         } catch (e) {
             console.log(e);
             return initUser();
+        }
+    }
+
+    async uploadFile(
+        file: File,
+        bucket = "upload",
+    ): Promise<UploadFileResponse | ErrorResponse> {
+        try {
+            const form = new FormData();
+            form.append("file", file);
+            form.append("bucket", bucket);
+
+            const uploadClient = axios.create({
+                baseURL: process.env.NEXT_PUBLIC_BACKEND_PATH,
+                headers: {
+                    Authorization: `Bearer ${getItem("access_token")}`,
+                },
+            });
+
+            const response = await uploadClient.post("/upload", form);
+
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
+    async addProduct(payload: AddProductRequest): Promise<Product | ErrorResponse> {
+        try {
+            const response = await this.client.post("/product", payload);
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
+    async listProduct(limit: number, cursor: string, canBeSole: "true" | "false" | "all", query: string): Promise<Pagination<Product> | ErrorResponse> {
+        try {
+            const response = await this.client.get("/products", {
+                params: {
+                    limit,
+                    cursor,
+                    canBeSole,
+                    query
+                }
+            });
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
+    async getProductById(id: string): Promise<Product | ErrorResponse> {
+        try {
+            const response = await this.client.get(`/product/${id}`);
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
+    async updateProductById(id: string, payload: AddProductRequest): Promise<Product | ErrorResponse> {
+        try {
+            const response = await this.client.put(`/product/${id}`, payload);
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
         }
     }
 }

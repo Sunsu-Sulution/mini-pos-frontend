@@ -5,7 +5,7 @@ interface ButtonProp {
   className?: string;
   icon?: ReactNode;
   disabled?: boolean;
-  text: string;
+  text: string | ReactNode;
   onClick: () => void;
 }
 

@@ -19,6 +19,7 @@ interface InputProp {
     | "numeric"
     | "decimal"
     | undefined;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
 export default function Input({
@@ -29,6 +30,7 @@ export default function Input({
   inputMode,
   value,
   onChange,
+  onKeyDown,
 }: InputProp) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -48,6 +50,7 @@ export default function Input({
         type={type}
         inputMode={inputMode}
         ref={inputRef}
+        onKeyDown={onKeyDown}
         className="w-full py-2 text-xl"
         placeholder={placeholder ?? ""}
       />

@@ -32,3 +32,33 @@ export const initUser = (): User => {
         role: "user"
     }
 }
+
+export interface UploadFileResponse {
+    url: string;
+}
+
+export interface AddProductRequest {
+    sku: string;
+    name: string;
+    price: number;
+    can_be_sold: boolean;
+    image_url: string;
+}
+
+export interface Product {
+    id: string;
+    sku: string;
+    name: string;
+    price: number;
+    stock: number;
+    can_be_sold: boolean;
+    image_url: string;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string;
+}
+
+export interface Pagination<T> {
+    data: T[];
+    next_cursor: string;
+}

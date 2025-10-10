@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @next/next/no-img-element */
 "use client";
 import Button from "@/components/Button";
@@ -5,9 +6,15 @@ import Input from "@/components/Input";
 import { useHelperContext } from "@/components/providers/helper-provider";
 import { isErrorResponse } from "@/types/request";
 import { IconSquareRoundedXFilled } from "@tabler/icons-react";
-import React, { useRef, useState } from "react";
+import React, { use, useEffect, useRef, useState } from "react";
 
-export default function Page() {
+type PageProps = {
+  params: Promise<{ productId: string }>;
+};
+
+export default function Page({ params }: PageProps) {
+  const { productId } = use(params);
+
   const { setFullLoading, backendClient, setAlert } = useHelperContext()();
   const [name, setName] = useState("");
   const [sku, setSku] = useState("");
@@ -69,9 +76,13 @@ export default function Page() {
     }
   };
 
-  const onAddProduct = async () => {
+  useEffect(() => {
+    fetchProduct();
+  }, []);
+
+  const onUpdateProduct = async () => {
     setFullLoading(true);
-    const response = await backendClient.addProduct({
+    const response = await backendClient.updateProductById(productId, {
       sku: sku,
       name: name,
       price: price,
@@ -84,17 +95,30 @@ export default function Page() {
     }
     setAlert(
       "สำเร็จ",
-      `เพิ่มสินค้า ${name}(${sku}) เรียบร้อยแล้ว`,
-      () => {
-        window.location.href = `/admin/product/${response.id}`;
-      },
+      `อัพเดทสินค้า ${name}(${sku}) เรียบร้อยแล้ว`,
+      undefined,
       false,
     );
   };
 
+  const fetchProduct = async () => {
+    setFullLoading(true);
+    const response = await backendClient.getProductById(productId);
+    if (isErrorResponse(response)) {
+      window.location.href = "/admin/product";
+      return;
+    }
+    setFullLoading(false);
+    setName(response.name);
+    setPrice(response.price);
+    setSku(response.sku);
+    setCanBeSold(response.can_be_sold);
+    setImageUrl(response.image_url);
+  };
+
   return (
     <div className="px-4 py-6">
-      <div className="text-4xl mb-4">เพิ่มรายการสินค้าใหม่</div>
+      <div className="text-4xl mb-4">แก้ไขสินค้า</div>
       <div className="flex items-center gap-3">
         <input
           type="checkbox"
@@ -116,7 +140,9 @@ export default function Page() {
               isDragActive
                 ? "bg-gray-100"
                 : `border-text-primary ${
-                    (imageUrl === null || imageUrl === "") ? "bg-white" : "bg-transparent"
+                    imageUrl === null || imageUrl === ""
+                      ? "bg-white"
+                      : "bg-transparent"
                   }`
             }`}
             onClick={onPickFile}
@@ -197,13 +223,13 @@ export default function Page() {
             name === "" ||
             sku === "" ||
             price < 0 ||
-            imageUrl === "" ||
-            imageUrl === null
+            imageUrl === null ||
+            imageUrl === ""
           }
-          text="เพิ่มสินค้า"
+          text="บันทึก"
           className="px-4 w-full"
           icon={<img src="/icon-bearhouse-1.png" alt="icon" />}
-          onClick={onAddProduct}
+          onClick={onUpdateProduct}
         />
       </div>
     </div>
