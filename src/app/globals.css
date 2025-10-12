@@ -1,7 +1,6 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fff2d5;
   --text-primary: #8c532a;
 }
 
@@ -17,13 +16,17 @@ body {
   letter-spacing: 0.8px;
 }
 
+html {
+  background-image: url('/background.webp');
+  background-size: contain;
+  background-repeat: repeat;
+  background-position: center;
+}
+
 .containter {
   width: 100%;
   min-height: 100vh;
-  background-image: url('/background.webp');
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center;
+  background-color: transparent;
 }
 
 input:focus {
