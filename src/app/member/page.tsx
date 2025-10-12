@@ -15,6 +15,8 @@ export default function Page() {
         <div className="flex flex-col gap-2">
           <div className="text-2xl">สมาชิก Bearhouse</div>
           <Input
+            value=""
+            onChange={() => {}}
             icon={<IconPhoneFilled />}
             type="text"
             inputMode="numeric"
@@ -46,6 +48,8 @@ export default function Page() {
             <div className="flex flex-col gap-3">
               <div className="text-xl">อีเมล*</div>
               <Input
+                value=""
+                onChange={() => {}}
                 type="email"
                 inputMode="email"
                 icon={<IconMailFilled />}
