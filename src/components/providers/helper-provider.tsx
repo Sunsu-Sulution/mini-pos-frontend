@@ -73,6 +73,18 @@ export function HelperProvider({ children }: { children: ReactNode }) {
         if (response.id === "") {
           router.push("/");
         }
+        if (
+          response.role !== "admin" &&
+          window.location.pathname.startsWith("/admin")
+        ) {
+          router.push("/main");
+        }
+        if (
+          response.role === "admin" &&
+          !window.location.pathname.startsWith("/admin")
+        ) {
+          router.push("/admin");
+        }
       }
       setUserData(response);
     };
