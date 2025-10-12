@@ -86,7 +86,7 @@ export default function Page() {
       "สำเร็จ",
       `เพิ่มสินค้า ${name}(${sku}) เรียบร้อยแล้ว`,
       () => {
-        window.location.href = `/admin/product/${response.id}`;
+        window.location.href = `/admin/product`;
       },
       false,
     );
@@ -116,7 +116,9 @@ export default function Page() {
               isDragActive
                 ? "bg-gray-100"
                 : `border-text-primary ${
-                    (imageUrl === null || imageUrl === "") ? "bg-white" : "bg-transparent"
+                    imageUrl === null || imageUrl === ""
+                      ? "bg-white"
+                      : "bg-transparent"
                   }`
             }`}
             onClick={onPickFile}

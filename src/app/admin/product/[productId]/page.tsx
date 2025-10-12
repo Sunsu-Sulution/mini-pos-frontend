@@ -96,7 +96,9 @@ export default function Page({ params }: PageProps) {
     setAlert(
       "สำเร็จ",
       `อัพเดทสินค้า ${name}(${sku}) เรียบร้อยแล้ว`,
-      undefined,
+      () => {
+        window.location.href = "/admin/product";
+      },
       false,
     );
   };
