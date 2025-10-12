@@ -49,17 +49,26 @@ export default function Navbar() {
   return (
     <>
       <div className="h-30"></div>
-      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 bg-white select-none w-[100vw] md:w-[600px] flex justify-around pt-4 pb-3 shadow-2xl">
-        {(userData.role === "admin" ? adminNavbars : navbars).map((navbar) => (
-          <a
-            href={navbar.route}
-            key={navbar.route}
-            className="flex flex-col justify-center items-center gap-1"
-          >
-            {navbar.icon}
-            <div className="text-md">{navbar.text}</div>
-          </a>
-        ))}
+      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-[100vw] md:w-[600px]">
+        <div className=" bg-white select-none  flex justify-around pt-4 pb-3 shadow-2xl">
+          {(userData.role === "admin" ? adminNavbars : navbars).map(
+            (navbar) => (
+              <a
+                href={navbar.route}
+                key={navbar.route}
+                className="flex flex-col justify-center items-center gap-1"
+              >
+                {navbar.icon}
+                <div className="text-md">{navbar.text}</div>
+              </a>
+            ),
+          )}
+        </div>
+        {process.env.NEXT_PUBLIC_ENV !== "production" && (
+          <div className=" text-white bg-text-primary px-3 shadow text-center">
+            Development Server
+          </div>
+        )}
       </div>
     </>
   );
