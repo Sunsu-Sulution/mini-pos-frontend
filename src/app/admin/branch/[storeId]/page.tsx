@@ -15,7 +15,6 @@ import {
   IconPlus,
   IconChevronDown,
   IconMinus,
-  IconSearch,
   IconBasketFilled,
   IconCarFilled,
   IconBuildingStore,
@@ -112,6 +111,12 @@ export default function Page({ params }: PageProps) {
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       );
   }, [inventoryMovementList, selectedProductId]);
+
+  const selectedProductInventoryQuantity = useMemo(() => {
+    if (!selectedProductId) return 0;
+    const inv = inventoryList.find((i) => i.product_id === selectedProductId);
+    return inv?.quantity ?? 0;
+  }, [inventoryList, selectedProductId]);
 
   const onUpdateStore = async () => {
     setFullLoading(true);
@@ -397,100 +402,50 @@ export default function Page({ params }: PageProps) {
               </button>
             </div>
             <div className="flex items-center gap-2 mt-4">
-              <div className="relative w-full">
-                <Input
-                  type="text"
-                  value={productQuery}
-                  onChange={(v) => {
-                    setProductQuery(v);
-                    setSelectedProductId("");
-                  }}
-                  icon={<IconBox />}
-                  placeholder="ค้นหาสินค้าโดยชื่อหรือ SKU"
-                  onFocus={() => {
-                    setProductQuery("");
-                    setSelectedProductId("");
-                    setIsProductInputFocused(true);
-                  }}
-                  onBlur={() => setIsProductInputFocused(false)}
-                />
-                {isProductInputFocused && (
-                  <div className="absolute z-10 mt-1 w-full max-h-60 overflow-auto border-2 rounded-xl bg-white">
-                    {filteredProducts.length === 0 ? (
-                      <div className="p-3 text-gray-500">ไม่พบสินค้า</div>
-                    ) : (
-                      filteredProducts.map((product) => (
-                        <div
-                          key={product.id}
-                          className="p-3 hover:bg-gray-100 cursor-pointer flex items-center gap-3 border-b-2 border-gray-300"
-                          onMouseDown={() => {
-                            setSelectedProductId(product.id);
-                            setProductQuery(`${product.name} (${product.sku})`);
-                          }}
-                        >
-                          <img
-                            src={product.image_url}
-                            alt={product.name}
-                            className="w-10 h-10 rounded object-cover"
-                          />
-                          <div className="flex flex-col">
-                            <div className="text-xl">{product.name}</div>
-                            <div className="text-xl text-gray-500">
-                              {product.sku}
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
-              <Input
-                type="number"
-                inputMode="decimal"
-                value={quantity}
-                onChange={setQuantity}
-                placeholder="จำนวน"
-              />
-            </div>
-            {isTransferMode && (
-              <div className="flex items-center gap-2 mt-3">
+              <div className="flex flex-col w-full">
+                <div className="text-xl text-gray-600 mb-1">สินค้า*</div>
                 <div className="relative w-full">
                   <Input
                     type="text"
-                    value={storeQuery}
+                    value={productQuery}
                     onChange={(v) => {
-                      setStoreQuery(v);
-                      setSelectedTargetStoreId("");
+                      setProductQuery(v);
+                      setSelectedProductId("");
                     }}
-                    icon={<IconBuildingStore />}
-                    placeholder="เลือกคลังปลายทาง โดยชื่อคลังหรือ Store ID"
+                    icon={<IconBox />}
+                    placeholder="ค้นหาสินค้าโดยชื่อหรือ SKU"
                     onFocus={() => {
-                      setStoreQuery("");
-                      setSelectedTargetStoreId("");
-                      setIsStoreInputFocused(true);
+                      setProductQuery("");
+                      setSelectedProductId("");
+                      setIsProductInputFocused(true);
                     }}
-                    onBlur={() => setIsStoreInputFocused(false)}
+                    onBlur={() => setIsProductInputFocused(false)}
                   />
-                  {isStoreInputFocused && (
+                  {isProductInputFocused && (
                     <div className="absolute z-10 mt-1 w-full max-h-60 overflow-auto border-2 rounded-xl bg-white">
-                      {filteredStores.length === 0 ? (
-                        <div className="p-3 text-gray-500">ไม่พบคลัง</div>
+                      {filteredProducts.length === 0 ? (
+                        <div className="p-3 text-gray-500">ไม่พบสินค้า</div>
                       ) : (
-                        filteredStores.map((s) => (
+                        filteredProducts.map((product) => (
                           <div
-                            key={s.id}
-                            className="p-3 hover:bg-gray-100 cursor-pointer flex items-center justify-between border-b-2 border-gray-300"
+                            key={product.id}
+                            className="p-3 hover:bg-gray-100 cursor-pointer flex items-center gap-3 border-b-2 border-gray-300"
                             onMouseDown={() => {
-                              setSelectedTargetStoreId(s.id);
-                              setStoreQuery(`${s.name} (${s.store_id})`);
+                              setSelectedProductId(product.id);
+                              setProductQuery(
+                                `${product.name} (${product.sku})`,
+                              );
                             }}
                           >
-                            <div className="flex gap-1 items-center">
-                              <IconBuildingStore />
-                              <div className="text-xl">{s.name}</div>
-                              <div className="text-sm text-gray-500">
-                                ({s.store_id})
+                            <img
+                              src={product.image_url}
+                              alt={product.name}
+                              className="w-10 h-10 rounded object-cover"
+                            />
+                            <div className="flex flex-col">
+                              <div className="text-xl">{product.name}</div>
+                              <div className="text-xl text-gray-500">
+                                {product.sku}
                               </div>
                             </div>
                           </div>
@@ -498,6 +453,74 @@ export default function Page({ params }: PageProps) {
                       )}
                     </div>
                   )}
+                </div>
+              </div>
+              <div className="flex flex-col w-40">
+                <div className="text-xl text-gray-600 mb-1">จำนวน*</div>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  value={quantity}
+                  onChange={setQuantity}
+                  placeholder="จำนวน"
+                />
+              </div>
+            </div>
+            <div className="text-md text-gray-600 mt-2">
+              คงเหลือ:{" "}
+              {selectedProductId === ""
+                ? "-"
+                : selectedProductInventoryQuantity.toLocaleString()}{" "}
+              หน่วย
+            </div>
+            {isTransferMode && (
+              <div className="flex items-center gap-2 mt-3">
+                <div className="flex flex-col w-full">
+                  <div className="text-xl text-gray-600 mb-1">คลังปลายทาง*</div>
+                  <div className="relative w-full">
+                    <Input
+                      type="text"
+                      value={storeQuery}
+                      onChange={(v) => {
+                        setStoreQuery(v);
+                        setSelectedTargetStoreId("");
+                      }}
+                      icon={<IconBuildingStore />}
+                      placeholder="เลือกคลังปลายทาง โดยชื่อคลังหรือ Store ID"
+                      onFocus={() => {
+                        setStoreQuery("");
+                        setSelectedTargetStoreId("");
+                        setIsStoreInputFocused(true);
+                      }}
+                      onBlur={() => setIsStoreInputFocused(false)}
+                    />
+                    {isStoreInputFocused && (
+                      <div className="absolute z-10 mt-1 w-full max-h-60 overflow-auto border-2 rounded-xl bg-white">
+                        {filteredStores.length === 0 ? (
+                          <div className="p-3 text-gray-500">ไม่พบคลัง</div>
+                        ) : (
+                          filteredStores.map((s) => (
+                            <div
+                              key={s.id}
+                              className="p-3 hover:bg-gray-100 cursor-pointer flex items-center justify-between border-b-2 border-gray-300"
+                              onMouseDown={() => {
+                                setSelectedTargetStoreId(s.id);
+                                setStoreQuery(`${s.name} (${s.store_id})`);
+                              }}
+                            >
+                              <div className="flex gap-1 items-center">
+                                <IconBuildingStore />
+                                <div className="text-xl">{s.name}</div>
+                                <div className="text-sm text-gray-500">
+                                  ({s.store_id})
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -508,7 +531,9 @@ export default function Page({ params }: PageProps) {
                   storeId === "" ||
                   selectedProductId === "" ||
                   quantity < 1 ||
-                  (isTransferMode && selectedTargetStoreId === "")
+                  selectedProductInventoryQuantity < 1 ||
+                  (isTransferMode && selectedTargetStoreId === "") ||
+                  quantity > selectedProductInventoryQuantity
                 }
                 text={
                   <div className="flex items-center gap-2">
@@ -520,6 +545,15 @@ export default function Page({ params }: PageProps) {
                 onClick={async () => {
                   if (!isTransferMode) {
                     setIsTransferMode(true);
+                    return;
+                  }
+                  if (selectedProductInventoryQuantity < 1) {
+                    setAlert(
+                      "ไม่สามารถย้ายสินค้า",
+                      "ไม่มีสินค้าในคลังต้นทาง",
+                      undefined,
+                      false,
+                    );
                     return;
                   }
                   // In transfer mode, confirmation behavior can be implemented here later
@@ -551,7 +585,9 @@ export default function Page({ params }: PageProps) {
                       name === "" ||
                       storeId === "" ||
                       selectedProductId === "" ||
-                      quantity < 1
+                      quantity < 1 ||
+                      selectedProductInventoryQuantity < 1 ||
+                      quantity > selectedProductInventoryQuantity
                     }
                     text={
                       <div className="flex items-center gap-2">
@@ -561,6 +597,24 @@ export default function Page({ params }: PageProps) {
                     }
                     className="px-5 w-full"
                     onClick={async () => {
+                      if (selectedProductInventoryQuantity < 1) {
+                        setAlert(
+                          "ไม่สามารถลบสินค้า",
+                          "ไม่มีสินค้าในคลัง",
+                          undefined,
+                          false,
+                        );
+                        return;
+                      }
+                      if (quantity > selectedProductInventoryQuantity) {
+                        setAlert(
+                          "ไม่สามารถลบสินค้า",
+                          "จำนวนในคลังไม่เพียงพอ",
+                          undefined,
+                          false,
+                        );
+                        return;
+                      }
                       await onRemoveInventory();
                       closeManageInventoryModal();
                     }}
