@@ -330,7 +330,7 @@ export default function Page({ params }: PageProps) {
       </div>
 
       {isManageInventoryModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-10 flex items-center justify-center">
           <div
             className="absolute inset-0 bg-black/50"
             onClick={() => setIsManageInventoryModalOpen(false)}
