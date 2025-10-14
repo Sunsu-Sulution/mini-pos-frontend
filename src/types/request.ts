@@ -94,3 +94,15 @@ export interface InventoryRequest {
     product_id: string;
     quantity: number;
 }
+
+export interface InventoryMovement {
+    id: string;
+    description: string;
+    source_store_id: string;
+    destination_store_id: string;
+    product_id: string;
+    quantity: number;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string;
+}

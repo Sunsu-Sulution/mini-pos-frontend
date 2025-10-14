@@ -4,8 +4,19 @@
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import { useHelperContext } from "@/components/providers/helper-provider";
-import { Inventory, isErrorResponse, Product } from "@/types/request";
-import { IconPlus, IconChevronDown, IconMinus } from "@tabler/icons-react";
+import {
+  Inventory,
+  InventoryMovement,
+  isErrorResponse,
+  Product,
+} from "@/types/request";
+import {
+  IconPlus,
+  IconChevronDown,
+  IconMinus,
+  IconSearch,
+  IconBasketFilled,
+} from "@tabler/icons-react";
 import React, { use, useEffect, useMemo, useState } from "react";
 
 type PageProps = {
@@ -22,19 +33,47 @@ export default function Page({ params }: PageProps) {
 
   const [productsList, setProductsList] = useState<Product[]>([]);
   const [inventoryList, setInventoryList] = useState<Inventory[]>([]);
+  const [inventoryMovementList, setInventoryMovementList] = useState<
+    InventoryMovement[]
+  >([]);
 
   const [selectedProductId, setSelectedProductId] = useState("");
+  const [productQuery, setProductQuery] = useState("");
   const [quantity, setQuantity] = useState<number>(1);
+  const [isProductInputFocused, setIsProductInputFocused] = useState(false);
 
   const [isStoreInfoOpen, setIsStoreInfoOpen] = useState(true);
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
-  const [isManageInventoryOpen, setIsManageInventoryOpen] = useState(false);
+  const [isManageInventoryModalOpen, setIsManageInventoryModalOpen] =
+    useState(false);
+  const [isInventoryMovementOpen, setIsInventoryMovementOpen] = useState(false);
 
   const productById = useMemo(() => {
     const map = new Map<string, Product>();
     productsList.forEach((product) => map.set(product.id, product));
     return map;
   }, [productsList]);
+
+  const filteredProducts = useMemo(() => {
+    const keyword = productQuery.trim().toLowerCase();
+    if (keyword === "") return productsList;
+    return productsList.filter((p) => {
+      const name = p.name?.toLowerCase() ?? "";
+      const sku = p.sku?.toLowerCase() ?? "";
+      return name.includes(keyword) || sku.includes(keyword);
+    });
+  }, [productsList, productQuery]);
+
+  const productSpecificMovements = useMemo(() => {
+    if (!selectedProductId) return [] as InventoryMovement[];
+    return inventoryMovementList
+      .filter((m) => m.product_id === selectedProductId)
+      .slice()
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      );
+  }, [inventoryMovementList, selectedProductId]);
 
   const onUpdateStore = async () => {
     setFullLoading(true);
@@ -75,6 +114,14 @@ export default function Page({ params }: PageProps) {
       return;
     }
     setInventoryList(response);
+
+    const inventoryMovementResponse =
+      await backendClient.getInventoryMovementByStoreById(storeId);
+    if (isErrorResponse(inventoryMovementResponse)) {
+      window.location.href = "/admin/branch";
+      return;
+    }
+    setInventoryMovementList(inventoryMovementResponse);
   };
 
   useEffect(() => {
@@ -108,6 +155,7 @@ export default function Page({ params }: PageProps) {
     if (isErrorResponse(response)) {
       return;
     }
+    setProductQuery("");
     setSelectedProductId("");
     setQuantity(1);
     setAlert(
@@ -131,6 +179,7 @@ export default function Page({ params }: PageProps) {
     if (isErrorResponse(response)) {
       return;
     }
+    setProductQuery("");
     setSelectedProductId("");
     setQuantity(1);
     setAlert(
@@ -213,84 +262,6 @@ export default function Page({ params }: PageProps) {
       <div className="bg-white p-5 rounded-2xl shadow-md mt-5">
         <div
           className="flex items-center justify-between"
-          onClick={() => setIsManageInventoryOpen((v) => !v)}
-        >
-          <div className="text-2xl">จัดการสินค้าในคลัง</div>
-          <div className="p-2 rounded-lg">
-            <IconChevronDown
-              size={22}
-              className={`${
-                isManageInventoryOpen ? "rotate-0" : "-rotate-90"
-              } transition-transform duration-200`}
-            />
-          </div>
-        </div>
-        {isManageInventoryOpen && (
-          <>
-            <div className="flex items-center gap-2 mt-4">
-              <select
-                className="border-2 h-12 rounded-xl px-3 text-xl w-full"
-                value={selectedProductId}
-                onChange={(e) => {
-                  setSelectedProductId(e.target.value);
-                }}
-              >
-                <option value="">เลือกสินค้า</option>
-                {productsList.map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {product.name} ({product.sku})
-                  </option>
-                ))}
-              </select>
-              <Input
-                type="number"
-                inputMode="decimal"
-                value={quantity}
-                onChange={setQuantity}
-                placeholder="จำนวน"
-              />
-            </div>
-            <div className="flex gap-2 mt-3">
-              <Button
-                disabled={
-                  name === "" ||
-                  storeId === "" ||
-                  selectedProductId === "" ||
-                  quantity == 0
-                }
-                text={
-                  <div className="flex items-center gap-2">
-                    <IconPlus size={18} />
-                    เพิ่มสินค้า
-                  </div>
-                }
-                className="px-5 w-full"
-                onClick={onAddInventory}
-              />
-              <Button
-                disabled={
-                  name === "" ||
-                  storeId === "" ||
-                  selectedProductId === "" ||
-                  quantity == 0
-                }
-                text={
-                  <div className="flex items-center gap-2">
-                    <IconMinus size={18} />
-                    ลดสินค้า
-                  </div>
-                }
-                className="px-5 w-full"
-                onClick={onRemoveInventory}
-              />
-            </div>
-          </>
-        )}
-      </div>
-
-      <div className="bg-white p-5 rounded-2xl shadow-md mt-5">
-        <div
-          className="flex items-center justify-between"
           onClick={() => setIsInventoryOpen((v) => !v)}
         >
           <div className="text-2xl">สินค้าในคลัง</div>
@@ -305,6 +276,17 @@ export default function Page({ params }: PageProps) {
         </div>
         {isInventoryOpen && (
           <>
+            <div className="flex justify-end mb-3">
+              <Button
+                text={
+                  <div className="flex gap-2">
+                    <IconBasketFilled /> จัดการสินค้าในคลัง
+                  </div>
+                }
+                className="px-4 w-fit"
+                onClick={() => setIsManageInventoryModalOpen(true)}
+              />
+            </div>
             {inventoryList.length === 0 ? (
               <div className="text-gray-500">ไม่มีสินค้าในคลัง</div>
             ) : (
@@ -315,7 +297,12 @@ export default function Page({ params }: PageProps) {
                   return (
                     <div
                       key={inv.id}
-                      className="flex items-center justify-between border-2 rounded-xl p-3"
+                      className="flex items-center justify-between border-2 rounded-xl p-3 cursor-pointer hover:bg-gray-50"
+                      onClick={() => {
+                        setSelectedProductId(product.id);
+                        setProductQuery(`${product.name} (${product.sku})`);
+                        setIsManageInventoryModalOpen(true);
+                      }}
                     >
                       <div className="flex items-center gap-3">
                         <img
@@ -331,13 +318,208 @@ export default function Page({ params }: PageProps) {
                         </div>
                       </div>
                       <div className="text-xl font-semibold">
-                        x{inv.quantity}
+                        {inv.quantity.toLocaleString()}
                       </div>
                     </div>
                   );
                 })}
               </div>
             )}
+          </>
+        )}
+      </div>
+
+      {isManageInventoryModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setIsManageInventoryModalOpen(false)}
+          />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl mx-4 p-5 animate-bounce-in">
+            <div className="flex items-center justify-between">
+              <div className="text-2xl">จัดการสินค้าในคลัง</div>
+              <button
+                type="button"
+                className="text-xl px-3 py-1 rounded-lg cursor-pointer"
+                onClick={() => setIsManageInventoryModalOpen(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="flex items-center gap-2 mt-4">
+              <div className="relative w-full">
+                <Input
+                  type="text"
+                  value={productQuery}
+                  onChange={(v) => {
+                    setProductQuery(v);
+                    setSelectedProductId("");
+                  }}
+                  icon={<IconSearch />}
+                  placeholder="ค้นหาสินค้าโดยชื่อหรือ SKU"
+                  onFocus={() => {
+                    setProductQuery("");
+                    setSelectedProductId("");
+                    setIsProductInputFocused(true);
+                  }}
+                  onBlur={() => setIsProductInputFocused(false)}
+                />
+                {isProductInputFocused && (
+                  <div className="absolute z-10 mt-1 w-full max-h-60 overflow-auto border-2 rounded-xl bg-white">
+                    {filteredProducts.length === 0 ? (
+                      <div className="p-3 text-gray-500">ไม่พบสินค้า</div>
+                    ) : (
+                      filteredProducts.map((product) => (
+                        <div
+                          key={product.id}
+                          className="p-3 hover:bg-gray-100 cursor-pointer flex items-center gap-3 border-b-2 border-gray-300"
+                          onMouseDown={() => {
+                            setSelectedProductId(product.id);
+                            setProductQuery(`${product.name} (${product.sku})`);
+                          }}
+                        >
+                          <img
+                            src={product.image_url}
+                            alt={product.name}
+                            className="w-10 h-10 rounded object-cover"
+                          />
+                          <div className="flex flex-col">
+                            <div className="text-xl">{product.name}</div>
+                            <div className="text-xl text-gray-500">
+                              {product.sku}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+              <Input
+                type="number"
+                inputMode="decimal"
+                value={quantity}
+                onChange={setQuantity}
+                placeholder="จำนวน"
+              />
+            </div>
+            <div className="flex gap-2 mt-3">
+              <Button
+                disabled={
+                  name === "" ||
+                  storeId === "" ||
+                  selectedProductId === "" ||
+                  quantity < 1
+                }
+                text={
+                  <div className="flex items-center gap-2">
+                    <IconPlus size={18} />
+                    เพิ่มจำนวนสินค้า
+                  </div>
+                }
+                className="px-5 w-full"
+                onClick={async () => {
+                  await onAddInventory();
+                  setIsManageInventoryModalOpen(false);
+                }}
+              />
+              <Button
+                disabled={
+                  name === "" ||
+                  storeId === "" ||
+                  selectedProductId === "" ||
+                  quantity < 1
+                }
+                text={
+                  <div className="flex items-center gap-2">
+                    <IconMinus size={18} />
+                    ลดจำนวนสินค้า
+                  </div>
+                }
+                className="px-5 w-full"
+                onClick={async () => {
+                  await onRemoveInventory();
+                  setIsManageInventoryModalOpen(false);
+                }}
+              />
+            </div>
+            <div className="mt-4">
+              <div className="text-xl mb-2">ประวัติของสินค้า</div>
+              {selectedProductId === "" ? (
+                <div className="text-gray-500">
+                  โปรดเลือกสินค้าเพื่อดูประวัติ
+                </div>
+              ) : productSpecificMovements.length === 0 ? (
+                <div className="text-gray-500">
+                  ยังไม่มีประวัติสำหรับสินค้านี้
+                </div>
+              ) : (
+                <div className="border-2 border-text-primary rounded-xl bg-white w-full p-3 text-lg h-40 overflow-auto">
+                  <ul className="list-disc pl-6">
+                    {productSpecificMovements.map((m) => {
+                      const dateTime = new Date(m.created_at);
+                      return (
+                        <li key={m.id}>
+                          {`[${dateTime.getFullYear()}-${dateTime.getMonth()}-${dateTime.getDate()} ${dateTime.getHours()}:${dateTime.getMinutes()}] ${
+                            m.description
+                          }`}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white p-5 rounded-2xl shadow-md mt-5">
+        <div
+          className="flex items-center justify-between"
+          onClick={() => setIsInventoryMovementOpen((v) => !v)}
+        >
+          <div className="text-2xl">ประวัติการย้ายสินค้าในคลัง</div>
+          <div className="p-2 rounded-lg">
+            <IconChevronDown
+              size={22}
+              className={`${
+                isInventoryMovementOpen ? "rotate-0" : "-rotate-90"
+              } transition-transform duration-200`}
+            />
+          </div>
+        </div>
+        {isInventoryMovementOpen && (
+          <>
+            <div className="mt-4">
+              {inventoryMovementList.length === 0 ? (
+                <div className="text-gray-500">ไม่มีประวัติการย้ายสินค้า</div>
+              ) : (
+                <div className="border-2 border-text-primary rounded-xl bg-white w-full p-3 text-xl h-60 max-h-60 overflow-auto">
+                  <ul className="list-disc pl-6">
+                    {inventoryMovementList
+                      .slice()
+                      .sort(
+                        (a, b) =>
+                          new Date(b.created_at).getTime() -
+                          new Date(a.created_at).getTime(),
+                      )
+                      .map((m) => {
+                        const dateTime = new Date(m.created_at);
+                        return (
+                          <li key={m.id} className="mb-2">
+                            {[
+                              `[${dateTime.getFullYear()}-${dateTime.getMonth()}-${dateTime.getDate()} ${dateTime.getHours()}:${dateTime.getMinutes()}] ${
+                                m.description
+                              }`,
+                            ]}
+                          </li>
+                        );
+                      })}
+                  </ul>
+                </div>
+              )}
+            </div>
           </>
         )}
       </div>

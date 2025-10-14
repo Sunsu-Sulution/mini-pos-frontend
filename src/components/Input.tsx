@@ -20,6 +20,8 @@ interface InputProp {
     | "decimal"
     | undefined;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onFocus?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
 }
 
 export default function Input({
@@ -31,6 +33,8 @@ export default function Input({
   value,
   onChange,
   onKeyDown,
+  onFocus,
+  onBlur,
 }: InputProp) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -51,6 +55,8 @@ export default function Input({
         inputMode={inputMode}
         ref={inputRef}
         onKeyDown={onKeyDown}
+        onFocus={onFocus}
+        onBlur={onBlur}
         className="w-full py-2 text-xl"
         placeholder={placeholder ?? ""}
       />
