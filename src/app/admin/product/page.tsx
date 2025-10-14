@@ -21,6 +21,7 @@ export default function Page() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    setFullLoading(false);
     const q = searchParams.get("q") ?? "";
     const s = (searchParams.get("status") ?? "all") as "all" | "true" | "false";
     const validStatus = ["all", "true", "false"].includes(s)

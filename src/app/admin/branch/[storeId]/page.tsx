@@ -9,6 +9,7 @@ import {
   InventoryMovement,
   isErrorResponse,
   Product,
+  Store,
 } from "@/types/request";
 import {
   IconPlus,
@@ -16,6 +17,9 @@ import {
   IconMinus,
   IconSearch,
   IconBasketFilled,
+  IconCarFilled,
+  IconBuildingStore,
+  IconBox,
 } from "@tabler/icons-react";
 import React, { use, useEffect, useMemo, useState } from "react";
 
@@ -31,6 +35,7 @@ export default function Page({ params }: PageProps) {
   const [storeCode, setStoreCode] = useState("");
   const [isActive, setIsActive] = useState(true);
 
+  const [storeList, setStoreList] = useState<Store[]>([]);
   const [productsList, setProductsList] = useState<Product[]>([]);
   const [inventoryList, setInventoryList] = useState<Inventory[]>([]);
   const [inventoryMovementList, setInventoryMovementList] = useState<
@@ -48,6 +53,28 @@ export default function Page({ params }: PageProps) {
     useState(false);
   const [isInventoryMovementOpen, setIsInventoryMovementOpen] = useState(false);
 
+  // Transfer mode states
+  const [isTransferMode, setIsTransferMode] = useState(false);
+  const [storeQuery, setStoreQuery] = useState("");
+  const [selectedTargetStoreId, setSelectedTargetStoreId] = useState("");
+  const [isStoreInputFocused, setIsStoreInputFocused] = useState(false);
+
+  const openManageInventoryModal = () => {
+    setIsTransferMode(false);
+    setStoreQuery("");
+    setSelectedTargetStoreId("");
+    setIsStoreInputFocused(false);
+    setIsManageInventoryModalOpen(true);
+  };
+
+  const closeManageInventoryModal = () => {
+    setIsManageInventoryModalOpen(false);
+    setIsTransferMode(false);
+    setStoreQuery("");
+    setSelectedTargetStoreId("");
+    setIsStoreInputFocused(false);
+  };
+
   const productById = useMemo(() => {
     const map = new Map<string, Product>();
     productsList.forEach((product) => map.set(product.id, product));
@@ -63,6 +90,17 @@ export default function Page({ params }: PageProps) {
       return name.includes(keyword) || sku.includes(keyword);
     });
   }, [productsList, productQuery]);
+
+  const filteredStores = useMemo(() => {
+    const keyword = storeQuery.trim().toLowerCase();
+    const list = storeList.filter((s) => s.id !== storeId);
+    if (keyword === "") return list;
+    return list.filter((s) => {
+      const name = s.name?.toLowerCase() ?? "";
+      const code = s.store_id?.toLowerCase() ?? "";
+      return name.includes(keyword) || code.includes(keyword);
+    });
+  }, [storeList, storeQuery, storeId]);
 
   const productSpecificMovements = useMemo(() => {
     if (!selectedProductId) return [] as InventoryMovement[];
@@ -105,6 +143,17 @@ export default function Page({ params }: PageProps) {
     setProductsList(response.data);
   };
 
+  const fetchStoreList = async () => {
+    setFullLoading(true);
+    const response = await backendClient.listStore(9999, "", "true", "");
+    setFullLoading(false);
+    if (isErrorResponse(response)) {
+      window.location.href = "/admin/branch";
+      return;
+    }
+    setStoreList(response.data);
+  };
+
   const fetchInventory = async () => {
     setFullLoading(true);
     const response = await backendClient.getInventoryByStoreById(storeId);
@@ -126,6 +175,7 @@ export default function Page({ params }: PageProps) {
 
   useEffect(() => {
     fetchStore();
+    fetchStoreList();
     fetchProduct().then(() => {
       fetchInventory();
     });
@@ -284,7 +334,7 @@ export default function Page({ params }: PageProps) {
                   </div>
                 }
                 className="px-4 w-fit"
-                onClick={() => setIsManageInventoryModalOpen(true)}
+                onClick={openManageInventoryModal}
               />
             </div>
             {inventoryList.length === 0 ? (
@@ -301,7 +351,7 @@ export default function Page({ params }: PageProps) {
                       onClick={() => {
                         setSelectedProductId(product.id);
                         setProductQuery(`${product.name} (${product.sku})`);
-                        setIsManageInventoryModalOpen(true);
+                        openManageInventoryModal();
                       }}
                     >
                       <div className="flex items-center gap-3">
@@ -333,7 +383,7 @@ export default function Page({ params }: PageProps) {
         <div className="fixed inset-0 z-10 flex items-center justify-center">
           <div
             className="absolute inset-0 bg-black/50"
-            onClick={() => setIsManageInventoryModalOpen(false)}
+            onClick={closeManageInventoryModal}
           />
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl mx-4 p-5 animate-bounce-in">
             <div className="flex items-center justify-between">
@@ -341,7 +391,7 @@ export default function Page({ params }: PageProps) {
               <button
                 type="button"
                 className="text-xl px-3 py-1 rounded-lg cursor-pointer"
-                onClick={() => setIsManageInventoryModalOpen(false)}
+                onClick={closeManageInventoryModal}
               >
                 ✕
               </button>
@@ -355,7 +405,7 @@ export default function Page({ params }: PageProps) {
                     setProductQuery(v);
                     setSelectedProductId("");
                   }}
-                  icon={<IconSearch />}
+                  icon={<IconBox />}
                   placeholder="ค้นหาสินค้าโดยชื่อหรือ SKU"
                   onFocus={() => {
                     setProductQuery("");
@@ -403,45 +453,120 @@ export default function Page({ params }: PageProps) {
                 placeholder="จำนวน"
               />
             </div>
+            {isTransferMode && (
+              <div className="flex items-center gap-2 mt-3">
+                <div className="relative w-full">
+                  <Input
+                    type="text"
+                    value={storeQuery}
+                    onChange={(v) => {
+                      setStoreQuery(v);
+                      setSelectedTargetStoreId("");
+                    }}
+                    icon={<IconBuildingStore />}
+                    placeholder="เลือกคลังปลายทาง โดยชื่อคลังหรือ Store ID"
+                    onFocus={() => {
+                      setStoreQuery("");
+                      setSelectedTargetStoreId("");
+                      setIsStoreInputFocused(true);
+                    }}
+                    onBlur={() => setIsStoreInputFocused(false)}
+                  />
+                  {isStoreInputFocused && (
+                    <div className="absolute z-10 mt-1 w-full max-h-60 overflow-auto border-2 rounded-xl bg-white">
+                      {filteredStores.length === 0 ? (
+                        <div className="p-3 text-gray-500">ไม่พบคลัง</div>
+                      ) : (
+                        filteredStores.map((s) => (
+                          <div
+                            key={s.id}
+                            className="p-3 hover:bg-gray-100 cursor-pointer flex items-center justify-between border-b-2 border-gray-300"
+                            onMouseDown={() => {
+                              setSelectedTargetStoreId(s.id);
+                              setStoreQuery(`${s.name} (${s.store_id})`);
+                            }}
+                          >
+                            <div className="flex gap-1 items-center">
+                              <IconBuildingStore />
+                              <div className="text-xl">{s.name}</div>
+                              <div className="text-sm text-gray-500">
+                                ({s.store_id})
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
             <div className="flex gap-2 mt-3">
               <Button
                 disabled={
                   name === "" ||
                   storeId === "" ||
                   selectedProductId === "" ||
-                  quantity < 1
+                  quantity < 1 ||
+                  (isTransferMode && selectedTargetStoreId === "")
                 }
                 text={
                   <div className="flex items-center gap-2">
-                    <IconPlus size={18} />
-                    เพิ่มจำนวนสินค้า
+                    <IconCarFilled size={18} />
+                    ย้ายสินค้า
                   </div>
                 }
                 className="px-5 w-full"
                 onClick={async () => {
-                  await onAddInventory();
-                  setIsManageInventoryModalOpen(false);
+                  if (!isTransferMode) {
+                    setIsTransferMode(true);
+                    return;
+                  }
+                  // In transfer mode, confirmation behavior can be implemented here later
                 }}
               />
-              <Button
-                disabled={
-                  name === "" ||
-                  storeId === "" ||
-                  selectedProductId === "" ||
-                  quantity < 1
-                }
-                text={
-                  <div className="flex items-center gap-2">
-                    <IconMinus size={18} />
-                    ลดจำนวนสินค้า
-                  </div>
-                }
-                className="px-5 w-full"
-                onClick={async () => {
-                  await onRemoveInventory();
-                  setIsManageInventoryModalOpen(false);
-                }}
-              />
+              {!isTransferMode && (
+                <>
+                  <Button
+                    disabled={
+                      name === "" ||
+                      storeId === "" ||
+                      selectedProductId === "" ||
+                      quantity < 1
+                    }
+                    text={
+                      <div className="flex items-center gap-2">
+                        <IconPlus size={18} />
+                        เพิ่มจำนวนสินค้า
+                      </div>
+                    }
+                    className="px-5 w-full"
+                    onClick={async () => {
+                      await onAddInventory();
+                      closeManageInventoryModal();
+                    }}
+                  />
+                  <Button
+                    disabled={
+                      name === "" ||
+                      storeId === "" ||
+                      selectedProductId === "" ||
+                      quantity < 1
+                    }
+                    text={
+                      <div className="flex items-center gap-2">
+                        <IconMinus size={18} />
+                        ลดจำนวนสินค้า
+                      </div>
+                    }
+                    className="px-5 w-full"
+                    onClick={async () => {
+                      await onRemoveInventory();
+                      closeManageInventoryModal();
+                    }}
+                  />
+                </>
+              )}
             </div>
             <div className="mt-4">
               <div className="text-xl mb-2">ประวัติของสินค้า</div>
@@ -495,7 +620,7 @@ export default function Page({ params }: PageProps) {
               {inventoryMovementList.length === 0 ? (
                 <div className="text-gray-500">ไม่มีประวัติการย้ายสินค้า</div>
               ) : (
-                <div className="border-2 border-text-primary rounded-xl bg-white w-full p-3 text-xl h-60 max-h-60 overflow-auto">
+                <div className="border-2 border-text-primary rounded-xl bg-white text-xl w-full p-3 text-md h-60 max-h-60 overflow-auto">
                   <ul className="list-disc pl-6">
                     {inventoryMovementList
                       .slice()
@@ -507,7 +632,7 @@ export default function Page({ params }: PageProps) {
                       .map((m) => {
                         const dateTime = new Date(m.created_at);
                         return (
-                          <li key={m.id} className="mb-2">
+                          <li key={m.id}>
                             {[
                               `[${dateTime.getFullYear()}-${dateTime.getMonth()}-${dateTime.getDate()} ${dateTime.getHours()}:${dateTime.getMinutes()}] ${
                                 m.description
