@@ -78,3 +78,19 @@ export interface AddStoreRequest {
     store_id: string;
     is_active: boolean;
 }
+
+export interface Inventory {
+    id: string;
+    store_id: string;
+    product_id: string;
+    quantity: number;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string;
+}
+
+export interface InventoryRequest {
+    store_id: string;
+    product_id: string;
+    quantity: number;
+}

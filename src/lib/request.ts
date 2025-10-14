@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import { getItem, removeItem, setItem } from "./storage";
-import { AddProductRequest, AddStoreRequest, ErrorResponse, initUser, LoginRequest, LoginResponse, Pagination, Product, Store, UploadFileResponse, User } from "@/types/request";
+import { AddProductRequest, AddStoreRequest, ErrorResponse, initUser, Inventory, InventoryRequest, LoginRequest, LoginResponse, Pagination, Product, Store, UploadFileResponse, User } from "@/types/request";
 
 const handlerError = (
     error: unknown,
@@ -250,6 +250,33 @@ export class BackendClient {
     async updateStoreById(id: string, payload: AddStoreRequest): Promise<Store | ErrorResponse> {
         try {
             const response = await this.client.put(`/store/${id}`, payload);
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
+    async addInventory(payload: InventoryRequest): Promise<Product | ErrorResponse> {
+        try {
+            const response = await this.client.post(`/inventory/add`, payload);
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
+    async removeInventory(payload: InventoryRequest): Promise<Product | ErrorResponse> {
+        try {
+            const response = await this.client.post(`/inventory/remove`, payload);
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
+    async getInventoryByStoreById(id: string): Promise<Inventory[] | ErrorResponse> {
+        try {
+            const response = await this.client.get(`/store/${id}/inventory`);
             return response.data;
         } catch (e) {
             return handlerError(e, this.setAlert);

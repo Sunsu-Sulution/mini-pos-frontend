@@ -196,7 +196,7 @@ export default function Page() {
                     </div>
                   </div>
                   <div className="text-sm text-gray-600 mt-1">
-                    คงเหลือ: {p.stock}
+                    คงเหลือทั้งหมด: {p.stock.toLocaleString()}
                   </div>
                 </div>
               </div>
