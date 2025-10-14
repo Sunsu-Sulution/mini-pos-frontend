@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import { getItem, removeItem, setItem } from "./storage";
-import { AddProductRequest, ErrorResponse, initUser, LoginRequest, LoginResponse, Pagination, Product, UploadFileResponse, User } from "@/types/request";
+import { AddProductRequest, AddStoreRequest, ErrorResponse, initUser, LoginRequest, LoginResponse, Pagination, Product, Store, UploadFileResponse, User } from "@/types/request";
 
 const handlerError = (
     error: unknown,
@@ -207,6 +207,49 @@ export class BackendClient {
     async updateProductById(id: string, payload: AddProductRequest): Promise<Product | ErrorResponse> {
         try {
             const response = await this.client.put(`/product/${id}`, payload);
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
+    async createStore(payload: AddStoreRequest): Promise<Store | ErrorResponse> {
+        try {
+            const response = await this.client.post(`/store`, payload);
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
+    async listStore(limit: number, cursor: string, isActive: "true" | "false" | "all", query: string): Promise<Pagination<Store> | ErrorResponse> {
+        try {
+            const response = await this.client.get("/stores", {
+                params: {
+                    limit,
+                    cursor,
+                    isActive,
+                    query
+                }
+            });
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
+    async getStoreById(id: string): Promise<Store | ErrorResponse> {
+        try {
+            const response = await this.client.get(`/store/${id}`);
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
+    async updateStoreById(id: string, payload: AddStoreRequest): Promise<Store | ErrorResponse> {
+        try {
+            const response = await this.client.put(`/store/${id}`, payload);
             return response.data;
         } catch (e) {
             return handlerError(e, this.setAlert);

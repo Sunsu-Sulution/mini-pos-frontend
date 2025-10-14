@@ -10,7 +10,7 @@ const navbars = [
     icon: <img src="/icon-bearhouse-4.png" className="h-7" alt="order" />,
   },
   {
-    text: "สาขา",
+    text: "คลัง",
     route: "/main/branch",
     icon: <img src="/icon-bearhouse-2.png" className="h-7" alt="branch" />,
   },
@@ -33,7 +33,7 @@ const adminNavbars = [
     icon: <img src="/icon-bearhouse-4.png" className="h-7" alt="order" />,
   },
   {
-    text: "สาขา",
+    text: "คลัง",
     route: "/admin/branch",
     icon: <img src="/icon-bearhouse-3.png" className="h-7" alt="branch" />,
   },

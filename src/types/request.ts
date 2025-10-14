@@ -62,3 +62,19 @@ export interface Pagination<T> {
     data: T[];
     next_cursor: string;
 }
+
+export interface Store {
+    id: string;
+    store_id: string;
+    name: string;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string;
+}
+
+export interface AddStoreRequest {
+    name: string;
+    store_id: string;
+    is_active: boolean;
+}
