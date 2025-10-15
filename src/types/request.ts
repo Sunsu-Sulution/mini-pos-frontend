@@ -106,3 +106,17 @@ export interface InventoryMovement {
     updated_at: string;
     deleted_at: string;
 }
+
+export interface MoveProductRequest {
+    source_store_id: string;
+    destination_store_id: string;
+    product_id: string;
+    quantity: number;
+}
+
+export interface MoveProductResponse {
+    source_store_id: string;
+    destination_store_id: string;
+    product_id: string;
+    quantity: number;
+}

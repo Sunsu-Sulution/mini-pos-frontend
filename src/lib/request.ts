@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import { getItem, removeItem, setItem } from "./storage";
-import { AddProductRequest, AddStoreRequest, ErrorResponse, initUser, Inventory, InventoryMovement, InventoryRequest, LoginRequest, LoginResponse, Pagination, Product, Store, UploadFileResponse, User } from "@/types/request";
+import { AddProductRequest, AddStoreRequest, ErrorResponse, initUser, Inventory, InventoryMovement, InventoryRequest, LoginRequest, LoginResponse, MoveProductRequest, MoveProductResponse, Pagination, Product, Store, UploadFileResponse, User } from "@/types/request";
 
 const handlerError = (
     error: unknown,
@@ -286,6 +286,15 @@ export class BackendClient {
     async getInventoryMovementByStoreById(id: string): Promise<InventoryMovement[] | ErrorResponse> {
         try {
             const response = await this.client.get(`/store/${id}/inventory-movement`);
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
+    async moveProduct(payload: MoveProductRequest): Promise<MoveProductResponse[] | ErrorResponse> {
+        try {
+            const response = await this.client.post(`/inventory/move`, payload);
             return response.data;
         } catch (e) {
             return handlerError(e, this.setAlert);

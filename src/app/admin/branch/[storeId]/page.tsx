@@ -247,6 +247,29 @@ export default function Page({ params }: PageProps) {
     );
   };
 
+  const tranferProduct = async () => {
+    setFullLoading(true);
+    const resposne = await backendClient.moveProduct({
+      source_store_id: storeId,
+      destination_store_id: selectedTargetStoreId,
+      product_id: selectedProductId,
+      quantity: Number(quantity),
+    });
+    setFullLoading(false);
+    if (isErrorResponse(resposne)) {
+      return;
+    }
+    setAlert(
+      "สำเร็จ",
+      "ย้ายสินค้าสำเร็จแล้ว",
+      () => {
+        closeManageInventoryModal();
+        fetchInventory();
+      },
+      false,
+    );
+  };
+
   return (
     <div className="px-4 py-6">
       <div className="text-4xl mb-4">{name}</div>
@@ -474,7 +497,17 @@ export default function Page({ params }: PageProps) {
               หน่วย
             </div>
             {isTransferMode && (
-              <div className="flex items-center gap-2 mt-3">
+              <div className="flex flex-col gap-3 mt-3">
+                <div className="flex flex-col w-full">
+                  <div className="text-xl text-gray-600 mb-1">คลังต้นทาง</div>
+                  <div className="relative w-full">
+                    <div className="flex items-center gap-2 p-3 border-2 border-gray-300 rounded-xl bg-gray-50">
+                      <IconBuildingStore />
+                      <div className="text-xl">{name}</div>
+                      <div className="text-sm text-gray-500">({storeCode})</div>
+                    </div>
+                  </div>
+                </div>
                 <div className="flex flex-col w-full">
                   <div className="text-xl text-gray-600 mb-1">คลังปลายทาง*</div>
                   <div className="relative w-full">
@@ -556,7 +589,7 @@ export default function Page({ params }: PageProps) {
                     );
                     return;
                   }
-                  // In transfer mode, confirmation behavior can be implemented here later
+                  tranferProduct();
                 }}
               />
               {!isTransferMode && (
