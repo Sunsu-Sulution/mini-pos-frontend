@@ -284,7 +284,7 @@ export class BackendClient {
         }
     }
 
-    async getInventoryByStoreById(id: string): Promise<Inventory[] | ErrorResponse> {
+    async getInventoryByStoreId(id: string): Promise<Inventory[] | ErrorResponse> {
         try {
             const response = await this.client.get(`/store/${id}/inventory`);
             return response.data;

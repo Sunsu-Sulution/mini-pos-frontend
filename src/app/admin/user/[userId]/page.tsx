@@ -117,18 +117,18 @@ export default function Page({ params }: PageProps) {
           <div className="text-xl">ชื่อ*</div>
           <Input
             type="text"
-            value={username}
-            onChange={setUsername}
-            placeholder="john john"
+            value={name}
+            onChange={setName}
+            placeholder="john"
           />
         </div>
         <div className="flex flex-col mt-4">
           <div className="text-xl">ชื่อผู้ใช้*</div>
           <Input
             type="text"
-            value={name}
-            onChange={setName}
-            placeholder="john"
+            value={username}
+            onChange={setUsername}
+            placeholder="john john"
           />
         </div>
         <div className="flex flex-col mt-4">

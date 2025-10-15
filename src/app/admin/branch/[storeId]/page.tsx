@@ -161,7 +161,7 @@ export default function Page({ params }: PageProps) {
 
   const fetchInventory = async () => {
     setFullLoading(true);
-    const response = await backendClient.getInventoryByStoreById(storeId);
+    const response = await backendClient.getInventoryByStoreId(storeId);
     setFullLoading(false);
     if (isErrorResponse(response)) {
       window.location.href = "/admin/branch";

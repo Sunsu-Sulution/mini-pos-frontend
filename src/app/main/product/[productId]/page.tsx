@@ -124,8 +124,8 @@ export default function Page({ params }: PageProps) {
 
   const [inventory, setInventory] = useState<Inventory[]>([]);
   const [store, setStore] = useState<Store[]>([]);
-  const [isAddInventoryModalOpen, setIsAddInventoryModalOpen] = useState(false);
   const [inventoryQuery, setInventoryQuery] = useState("");
+  const [isAddInventoryModalOpen, setIsAddInventoryModalOpen] = useState(false);
   const [storeQuery, setStoreQuery] = useState("");
   const [selectedTargetStoreId, setSelectedTargetStoreId] = useState("");
   const [isStoreInputFocused, setIsStoreInputFocused] = useState(false);
@@ -205,28 +205,12 @@ export default function Page({ params }: PageProps) {
   return (
     <div className="px-4 py-6">
       <div className="bg-white p-5 rounded-2xl shadow-md">
-        <div className="text-3xl">ข้อมูลสินค้า</div>
-        <div className="flex items-center gap-3 mt-3">
-          <input
-            type="checkbox"
-            id="requestTaxInvoice"
-            name="taxInvoice"
-            checked={canBeSold}
-            onChange={(e) => setCanBeSold(e.target.checked)}
-            className="w-5 h-5 text-text-primary border-2"
-          />
-          <label
-            htmlFor="requestTaxInvoice"
-            className="text-2xl cursor-pointer"
-          >
-            เปิดขาย
-          </label>
-        </div>
+        <div className="text-3xl">{name}</div>
         <div className="mt-4">
-          <div className="text-2xl">รูปสินค้า*</div>
+          <div className="text-2xl">รูปสินค้า</div>
           <div className="relative">
             <div
-              className={`w-50 h-30 border-2 rounded-md flex items-center justify-center text-center cursor-pointer transition-colors border-dashed ${
+              className={`w-50 h-30 border-2 rounded-md flex items-center justify-center text-center transition-colors border-dashed ${
                 isDragActive
                   ? "bg-gray-100"
                   : `border-text-primary ${
@@ -235,12 +219,6 @@ export default function Page({ params }: PageProps) {
                         : "bg-transparent"
                     }`
               }`}
-              onClick={onPickFile}
-              onDrop={onDrop}
-              onDragOver={onDragOver}
-              onDragLeave={onDragLeave}
-              role="button"
-              aria-label="อัพโหลดรูปสินค้า"
               tabIndex={0}
             >
               {imageUrl ? (
@@ -251,98 +229,45 @@ export default function Page({ params }: PageProps) {
                 />
               ) : (
                 <div className="px-4 text-text-primary text-xl opacity-50">
-                  ลากและวางรูปภาพที่นี่ หรือคลิกเพื่อเลือกไฟล์
+                  ไม่มีรูปภาพ
                 </div>
               )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={onFileChange}
-              />
             </div>
-            {imageUrl && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeleteImage();
-                }}
-                className="absolute -top-2 left-47 w-6 h-6 bg-white text-text-primary rounded-lg flex items-center justify-center"
-                aria-label="ลบรูปภาพ"
-              >
-                <IconSquareRoundedXFilled />
-              </button>
-            )}
           </div>
         </div>
         <div className="flex flex-col mt-4">
-          <div className="text-2xl">ชื่อสินค้า*</div>
+          <div className="text-2xl">ชื่อสินค้า</div>
           <Input
             type="text"
             value={name}
-            onChange={setName}
+            onChange={() => {}}
             placeholder="แมวน้ำ"
           />
         </div>
         <div className="flex flex-col mt-4">
-          <div className="text-2xl">sku*</div>
+          <div className="text-2xl">sku</div>
           <Input
             type="text"
             value={sku}
-            onChange={setSku}
+            onChange={() => {}}
             placeholder="sku-01"
           />
         </div>
         <div className="flex flex-col mt-4">
-          <div className="text-2xl">ราคา*</div>
+          <div className="text-2xl">ราคา</div>
           <Input
             type="number"
             inputMode="numeric"
             value={price}
-            onChange={(value) => {
-              const raw = String(value ?? "");
-              if (raw === "") {
-                setPrice(0);
-                return;
-              }
-              const trimmed = raw.replace(/^0+(?=\d)/, "");
-              setPrice(Number(trimmed));
-            }}
+            onChange={() => {}}
             placeholder="499.99"
-          />
-        </div>
-        <div className="mt-10 flex justify-end">
-          <Button
-            disabled={
-              name === "" ||
-              sku === "" ||
-              price < 0 ||
-              imageUrl === null ||
-              imageUrl === ""
-            }
-            text="บันทึก"
-            className="px-4 w-full"
-            icon={<img src="/icon-bearhouse-1.png" alt="icon" />}
-            onClick={onUpdateProduct}
           />
         </div>
       </div>
 
       <div className="bg-white p-5 rounded-2xl shadow-md mt-5">
-        <div className="flex items-center justify-between gap-3 flex-col md:flex-row">
+        <div className="flex items-center justify-between">
           <div className="text-2xl">สาขาที่มีสินค้า</div>
-          <div className="flex items-center gap-2 w-full md:w-auto">
-            <Button
-              text={
-                <span className="flex gap-2 items-center">
-                  <IconPlus size={18} /> เพิ่มสินค้าเข้าคลัง
-                </span>
-              }
-              className="px-4 w-fit"
-              onClick={() => setIsAddInventoryModalOpen(true)}
-            />
-          </div>
         </div>
         <div className="w-full mt-3">
           <Input
