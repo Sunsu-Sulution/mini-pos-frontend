@@ -54,12 +54,10 @@ export function HelperProvider({ children }: { children: ReactNode }) {
     const fetchUserData = async () => {
       const backendClient = new BackendClient(setAlert);
       const response = await backendClient.getUserInfo();
-      setFullLoading(true);
       const isError = isErrorResponse(response);
       if (isError) {
         return;
       }
-      setFullLoading(false);
 
       if (window.location.pathname === "/") {
         if (response.id !== "") {
