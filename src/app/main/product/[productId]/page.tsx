@@ -5,10 +5,9 @@ import Button from "@/components/Button";
 import Input from "@/components/Input";
 import { useHelperContext } from "@/components/providers/helper-provider";
 import { Inventory, isErrorResponse, Store } from "@/types/request";
-import { IconSquareRoundedXFilled } from "@tabler/icons-react";
 import { IconPlus, IconBuildingStore } from "@tabler/icons-react";
 import { IconSearch } from "@tabler/icons-react";
-import React, { use, useEffect, useMemo, useRef, useState } from "react";
+import React, { use, useEffect, useMemo, useState } from "react";
 import { IconTruckDelivery } from "@tabler/icons-react";
 
 type PageProps = {
@@ -22,90 +21,13 @@ export default function Page({ params }: PageProps) {
   const [name, setName] = useState("");
   const [sku, setSku] = useState("");
   const [price, setPrice] = useState(0);
-  const [canBeSold, setCanBeSold] = useState(true);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [isDragActive, setIsDragActive] = useState(false);
-
-  const uploadImage = async (file: File) => {
-    setFullLoading(true);
-    const response = await backendClient.uploadFile(file, "product");
-    setFullLoading(false);
-    if (isErrorResponse(response)) {
-      return;
-    }
-
-    setImageUrl(response.url);
-  };
-
-  const handleFiles = (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    const file = files[0];
-    uploadImage(file);
-  };
-
-  const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragActive(false);
-    handleFiles(e.dataTransfer.files);
-  };
-
-  const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragActive(true);
-  };
-
-  const onDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragActive(false);
-  };
-
-  const onPickFile = () => {
-    fileInputRef.current?.click();
-  };
-
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleFiles(e.target.files);
-  };
-
-  const onDeleteImage = () => {
-    setImageUrl(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
 
   useEffect(() => {
     fetchProduct();
     fetchInventory();
   }, []);
-
-  const onUpdateProduct = async () => {
-    setFullLoading(true);
-    const response = await backendClient.updateProductById(productId, {
-      sku: sku,
-      name: name,
-      price: price,
-      can_be_sold: canBeSold,
-      image_url: imageUrl ?? "",
-    });
-    setFullLoading(false);
-    if (isErrorResponse(response)) {
-      return;
-    }
-    setAlert(
-      "สำเร็จ",
-      `อัพเดทสินค้า ${name}(${sku}) เรียบร้อยแล้ว`,
-      () => {
-        window.location.href = "/admin/product";
-      },
-      false,
-    );
-  };
 
   const fetchProduct = async () => {
     setFullLoading(true);
@@ -118,7 +40,6 @@ export default function Page({ params }: PageProps) {
     setName(response.name);
     setPrice(response.price);
     setSku(response.sku);
-    setCanBeSold(response.can_be_sold);
     setImageUrl(response.image_url);
   };
 
@@ -210,15 +131,7 @@ export default function Page({ params }: PageProps) {
           <div className="text-2xl">รูปสินค้า</div>
           <div className="relative">
             <div
-              className={`w-50 h-30 border-2 rounded-md flex items-center justify-center text-center transition-colors border-dashed ${
-                isDragActive
-                  ? "bg-gray-100"
-                  : `border-text-primary ${
-                      imageUrl === null || imageUrl === ""
-                        ? "bg-white"
-                        : "bg-transparent"
-                    }`
-              }`}
+              className={`w-50 h-30 border-2 border-text-primary bg-transparent rounded-md flex items-center justify-center text-center transition-colors border-dashed`}
               tabIndex={0}
             >
               {imageUrl ? (
