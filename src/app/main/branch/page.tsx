@@ -5,7 +5,7 @@ import Button from "@/components/Button";
 import Input from "@/components/Input";
 import { useHelperContext } from "@/components/providers/helper-provider";
 import { isErrorResponse, Product } from "@/types/request";
-import { IconPlus, IconSearch } from "@tabler/icons-react";
+import { IconSearch } from "@tabler/icons-react";
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 

@@ -33,7 +33,7 @@ export default function Page({ params }: PageProps) {
     setFullLoading(true);
     const response = await backendClient.getProductById(productId);
     if (isErrorResponse(response)) {
-      window.location.href = "/admin/product";
+      window.location.href = "/main/branch";
       return;
     }
     setFullLoading(false);
@@ -198,15 +198,12 @@ export default function Page({ params }: PageProps) {
               ไม่พบสาขาที่มีสินค้านี้
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-4 cursor-pointer">
+            <div className="grid grid-cols-1 gap-4">
               {filteredInventoryWithStore.map(({ inv, store }) => {
                 if (!store) return null;
                 return (
                   <div
                     key={inv.id}
-                    onClick={() => {
-                      window.location.href = `/admin/branch/${store.id}`;
-                    }}
                     className="border-2 border-text-primary rounded-xl p-4 bg-white flex gap-4 items-center"
                   >
                     <div className="flex justify-between items-center w-full">
