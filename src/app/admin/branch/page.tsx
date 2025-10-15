@@ -15,16 +15,19 @@ export default function Page() {
   const [nextCursor, setNextCursor] = useState("");
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [statusFilter, setStatusFilter] = useState<"all" | "true" | "false">(
-    "all",
+    "true",
   );
   const searchParams = useSearchParams();
 
   useEffect(() => {
     const q = searchParams.get("q") ?? "";
-    const s = (searchParams.get("status") ?? "all") as "all" | "true" | "false";
+    const s = (searchParams.get("status") ?? "true") as
+      | "all"
+      | "true"
+      | "false";
     const validStatus = ["all", "true", "false"].includes(s)
       ? (s as "all" | "true" | "false")
-      : "all";
+      : "true";
 
     setSearchText(q);
     setStatusFilter(validStatus);
