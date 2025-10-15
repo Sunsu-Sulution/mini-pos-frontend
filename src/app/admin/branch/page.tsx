@@ -179,7 +179,7 @@ export default function Page() {
                   </div>
                   <div className="mt-1 flex items-center justify-between">
                     <div
-                      className={`text-xl px-2 py-1 rounded-lg ${
+                      className={`text-md px-2 py-1 rounded-lg ${
                         store.is_active
                           ? "bg-green-500 text-white"
                           : "bg-gray-300 text-gray-700"

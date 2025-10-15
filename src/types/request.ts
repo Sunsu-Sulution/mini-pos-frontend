@@ -12,6 +12,17 @@ export interface LoginRequest {
     password: string;
 }
 
+export interface RegisterRequest {
+    username: string;
+    name: string;
+    password: string;
+    store_id: string;
+}
+
+export interface RegisterResponse {
+    user: User;
+}
+
 export interface LoginResponse {
     refresh_token: string;
     access_token: string;
@@ -22,6 +33,7 @@ export interface User {
     username: string;
     name: string;
     role: "admin" | "user";
+    store_id: string;
 }
 
 export const initUser = (): User => {
@@ -29,7 +41,8 @@ export const initUser = (): User => {
         id: "",
         username: "",
         name: "",
-        role: "user"
+        role: "user",
+        store_id: ""
     }
 }
 

@@ -187,7 +187,7 @@ export default function Page() {
                       {p.price.toLocaleString()} บาท
                     </div>
                     <div
-                      className={`text-xl px-2 py-1 rounded-lg ${
+                      className={`text-md px-2 py-1 rounded-lg ${
                         p.can_be_sold
                           ? "bg-green-500 text-white"
                           : "bg-gray-300 text-gray-700"

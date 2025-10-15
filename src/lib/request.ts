@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import { getItem, removeItem, setItem } from "./storage";
-import { AddProductRequest, AddStoreRequest, ErrorResponse, initUser, Inventory, InventoryMovement, InventoryRequest, LoginRequest, LoginResponse, MoveProductRequest, MoveProductResponse, Pagination, Product, Store, UploadFileResponse, User } from "@/types/request";
+import { AddProductRequest, AddStoreRequest, ErrorResponse, initUser, Inventory, InventoryMovement, InventoryRequest, LoginRequest, LoginResponse, MoveProductRequest, MoveProductResponse, Pagination, Product, RegisterRequest, RegisterResponse, Store, UploadFileResponse, User } from "@/types/request";
 
 const handlerError = (
     error: unknown,
@@ -130,6 +130,15 @@ export class BackendClient {
             const response = await this.client.post("/auth/login", payload);
             setItem("access_token", response.data.access_token);
             setItem("refresh_token", response.data.refresh_token);
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
+    async register(payload: RegisterRequest): Promise<RegisterResponse | ErrorResponse> {
+        try {
+            const response = await this.client.post("/auth/register", payload);
             return response.data;
         } catch (e) {
             return handlerError(e, this.setAlert);
@@ -295,6 +304,21 @@ export class BackendClient {
     async moveProduct(payload: MoveProductRequest): Promise<MoveProductResponse[] | ErrorResponse> {
         try {
             const response = await this.client.post(`/inventory/move`, payload);
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
+    async listUser(limit: number, cursor: string, query: string): Promise<Pagination<User> | ErrorResponse> {
+        try {
+            const response = await this.client.get("/users", {
+                params: {
+                    limit,
+                    cursor,
+                    query
+                }
+            });
             return response.data;
         } catch (e) {
             return handlerError(e, this.setAlert);

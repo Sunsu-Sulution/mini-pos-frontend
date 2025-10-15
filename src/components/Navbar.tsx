@@ -22,11 +22,11 @@ const navbars = [
 ];
 
 const adminNavbars = [
-  {
-    text: "ยอดขาย",
-    route: "/admin",
-    icon: <img src="/icon-bearhouse-2.png" className="h-7" alt="branch" />,
-  },
+  // {
+  //   text: "ยอดขาย",
+  //   route: "/admin",
+  //   icon: <img src="/icon-bearhouse-2.png" className="h-7" alt="branch" />,
+  // },
   {
     text: "สินค้า",
     route: "/admin/product",
