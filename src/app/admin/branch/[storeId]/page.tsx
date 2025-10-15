@@ -424,7 +424,7 @@ export default function Page({ params }: PageProps) {
                 ✕
               </button>
             </div>
-            <div className="flex items-center gap-2 mt-4">
+            <div className="flex items-center gap-2 mt-4 flex-col md:flex-row">
               <div className="flex flex-col w-full">
                 <div className="text-xl text-gray-600 mb-1">สินค้า*</div>
                 <div className="relative w-full">
@@ -478,7 +478,7 @@ export default function Page({ params }: PageProps) {
                   )}
                 </div>
               </div>
-              <div className="flex flex-col w-40">
+              <div className="flex flex-col w-full md:w-40">
                 <div className="text-xl text-gray-600 mb-1">จำนวน*</div>
                 <Input
                   type="number"
@@ -557,7 +557,7 @@ export default function Page({ params }: PageProps) {
                 </div>
               </div>
             )}
-            <div className="flex gap-2 mt-3">
+            <div className="flex gap-2 mt-3 flex-col md:flex-row">
               <Button
                 disabled={
                   name === "" ||

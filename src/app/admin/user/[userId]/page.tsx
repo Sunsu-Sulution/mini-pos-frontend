@@ -6,12 +6,20 @@ import Input from "@/components/Input";
 import { useHelperContext } from "@/components/providers/helper-provider";
 import { isErrorResponse, Store } from "@/types/request";
 import { IconBuildingStore, IconRefresh } from "@tabler/icons-react";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { use, useEffect, useMemo, useState } from "react";
 
-export default function Page() {
+type PageProps = {
+  params: Promise<{ userId: string }>;
+};
+
+export default function Page({ params }: PageProps) {
+  const { userId } = use(params);
+
   const { backendClient, setFullLoading, setAlert } = useHelperContext()();
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
+  const [role, setRole] = useState<"admin" | "user">("user");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [password, setPassword] = useState("");
 
   const [storeList, setStoreList] = useState<Store[]>([]);
@@ -20,14 +28,29 @@ export default function Page() {
   const [isStoreInputFocused, setIsStoreInputFocused] = useState(false);
 
   useEffect(() => {
-    fetchStore();
+    fetchStore().then(() => {
+      fetchUser();
+    });
   }, []);
+
+  const fetchUser = async () => {
+    setFullLoading(true);
+    const response = await backendClient.getUserById(userId);
+    if (isErrorResponse(response)) {
+      return;
+    }
+    setFullLoading(false);
+    setName(response.name);
+    setUsername(response.username);
+    setSelectedStoreId(response.store_id);
+    setRole((response.role as "admin" | "user") ?? "user");
+  };
 
   const fetchStore = async () => {
     setFullLoading(true);
     const response = await backendClient.listStore(9999, "", "true", "");
     if (isErrorResponse(response)) {
-      window.location.href = `/admin/user`;
+      window.location.href = "/admin/user";
       return;
     }
     setFullLoading(false);
@@ -44,6 +67,11 @@ export default function Page() {
     });
   }, [storeList, storeQuery]);
 
+  const getStoreName = (storeId: string) => {
+    const store = storeList.find((store) => store.id === storeId);
+    return store ? `${store.name} (${store.store_id})` : storeId;
+  };
+
   const generateRandomPassword = () => {
     const randomPassword = Math.floor(
       100000 + Math.random() * 900000,
@@ -51,32 +79,38 @@ export default function Page() {
     setPassword(randomPassword);
   };
 
-  const onRegister = async () => {
+  const onUpdateUser = async () => {
     setFullLoading(true);
-    const response = await backendClient.register({
+    const response = await backendClient.updateUser(userId, {
       username: username,
       name: name,
-      password: password,
+      password: isChangingPassword ? password : "",
       store_id: selectedStoreId,
+      role: role,
     });
     setFullLoading(false);
     if (isErrorResponse(response)) {
       return;
     }
-
     setAlert(
       "สำเร็จ",
-      "เพิ่มผู้ใช้งานเรียบร้อยแล้ว",
+      "อัพเดทข้อมูลผู้ใช้สำเร็จ",
       () => {
-        window.location.href = `/admin/user/${response.user.id}`;
+        window.location.href = "/admin/user";
       },
       false,
     );
   };
 
+  useEffect(() => {
+    if (isStoreInputFocused) return;
+    if (!selectedStoreId) return;
+    setStoreQuery(getStoreName(selectedStoreId));
+  }, [storeList, selectedStoreId, isStoreInputFocused]);
+
   return (
     <div className="px-4 py-6">
-      <div className="text-4xl mb-4">เพิ่มผู้ใช้งานใหม่</div>
+      <div className="text-4xl mb-4">ข้อมูลของ {username}</div>
       <div className="bg-white p-5 rounded-2xl shadow-md">
         <div className="text-2xl mb-3">ข้อมูลผู้ใช้งาน</div>
         <div className="flex flex-col">
@@ -98,25 +132,48 @@ export default function Page() {
           />
         </div>
         <div className="flex flex-col mt-4">
-          <div className="text-xl">รหัสผ่าน*</div>
-          <div className="flex gap-2">
-            <Input
-              type="text"
-              value={password}
-              onChange={setPassword}
-              placeholder="********"
-              className="flex-1"
-            />
+          <div className="text-xl">สิทธิ์การใช้งาน</div>
+          <select
+            className="mt-2 border-2 rounded-xl px-3 py-2 text-xl"
+            value={role}
+            onChange={(e) => setRole(e.target.value as "admin" | "user")}
+          >
+            <option value="user">ผู้ใช้งาน (user)</option>
+            <option value="admin">ผู้ดูแล (admin)</option>
+          </select>
+        </div>
+        <div className="flex flex-col mt-8">
+          <div className="flex items-center justify-between">
+            <div className="text-xl">รหัสผ่าน</div>
             <Button
-              text={
-                <span className="flex gap-1 text-md">
-                  <IconRefresh /> สุ่มรหัสผ่าน
-                </span>
-              }
+              text={isChangingPassword ? "ยกเลิก" : "เปลี่ยนรหัสผ่าน"}
               className="w-fit px-4"
-              onClick={generateRandomPassword}
+              onClick={() => {
+                setIsChangingPassword((v) => !v);
+                setPassword("");
+              }}
             />
           </div>
+          {isChangingPassword && (
+            <div className="mt-2 flex gap-2">
+              <Input
+                type="text"
+                value={password}
+                onChange={setPassword}
+                placeholder="********"
+                className="flex-1"
+              />
+              <Button
+                text={
+                  <span className="flex gap-1 text-md">
+                    <IconRefresh /> สุ่มรหัสผ่าน
+                  </span>
+                }
+                className="w-fit px-4"
+                onClick={generateRandomPassword}
+              />
+            </div>
+          )}
         </div>
         <div className="flex flex-col mt-4">
           <div className="text-xl">สาขาที่ดูแล</div>
@@ -131,8 +188,6 @@ export default function Page() {
               icon={<IconBuildingStore />}
               placeholder="เลือกสาขาที่ดูแล โดยชื่อสาขาหรือ Store ID"
               onFocus={() => {
-                setStoreQuery("");
-                setSelectedStoreId("");
                 setIsStoreInputFocused(true);
               }}
               onBlur={() => setIsStoreInputFocused(false)}
@@ -167,11 +222,15 @@ export default function Page() {
         </div>
         <div className="mt-10 flex justify-end">
           <Button
-            disabled={name === "" || username === "" || password === ""}
-            text="เพิ่มผู้ใช้งาน"
+            disabled={
+              name === "" ||
+              username === "" ||
+              (isChangingPassword && password === "")
+            }
+            text="อัพเดทข้อมูลผู้ใช้"
             className="px-4 w-full"
             icon={<img src="/icon-bearhouse-1.png" alt="icon" />}
-            onClick={onRegister}
+            onClick={onUpdateUser}
           />
         </div>
       </div>

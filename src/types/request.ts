@@ -133,3 +133,11 @@ export interface MoveProductResponse {
     product_id: string;
     quantity: number;
 }
+
+export interface UpdateUserRequest {
+    username: string;
+    name: string;
+    password: string;
+    role: "user" | "admin";
+    store_id: string;
+}

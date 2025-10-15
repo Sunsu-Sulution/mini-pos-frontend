@@ -1,3 +1,4 @@
+import { UpdateUserRequest } from './../types/request';
 import axios, { AxiosInstance } from "axios";
 import { getItem, removeItem, setItem } from "./storage";
 import { AddProductRequest, AddStoreRequest, ErrorResponse, initUser, Inventory, InventoryMovement, InventoryRequest, LoginRequest, LoginResponse, MoveProductRequest, MoveProductResponse, Pagination, Product, RegisterRequest, RegisterResponse, Store, UploadFileResponse, User } from "@/types/request";
@@ -319,6 +320,24 @@ export class BackendClient {
                     query
                 }
             });
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
+    async getUserById(id: string): Promise<User | ErrorResponse> {
+        try {
+            const response = await this.client.get(`/user/${id}`);
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
+    async updateUser(id: string, payload: UpdateUserRequest): Promise<User | ErrorResponse> {
+        try {
+            const response = await this.client.put(`/user/${id}`, payload);
             return response.data;
         } catch (e) {
             return handlerError(e, this.setAlert);

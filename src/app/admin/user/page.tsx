@@ -73,8 +73,8 @@ export default function Page() {
   };
 
   const getStoreName = (storeId: string) => {
-    const store = storeList.find((store) => store.store_id === storeId);
-    return store ? store.name : storeId;
+    const store = storeList.find((store) => store.id === storeId);
+    return store ? `${store.name} (${store.store_id})` : storeId;
   };
 
   return (
@@ -123,6 +123,9 @@ export default function Page() {
             {userList.map((user) => (
               <div
                 key={user.id}
+                onClick={() => {
+                  window.location.href = `/admin/user/${user.id}`;
+                }}
                 className="border-2 border-text-primary rounded-xl p-4 bg-white flex gap-4 items-center"
               >
                 <div className="flex justify-between items-center w-full">
@@ -134,7 +137,7 @@ export default function Page() {
                         <span className="text-gray-400">({user.username})</span>
                       </div>
                       {user.store_id !== "" && (
-                        <div className="text-sm text-gray-600 mt-1">
+                        <div className="text-md text-gray-500 mt-1">
                           คลัง: {getStoreName(user.store_id)}
                         </div>
                       )}
