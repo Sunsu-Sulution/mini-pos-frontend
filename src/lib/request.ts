@@ -343,4 +343,13 @@ export class BackendClient {
             return handlerError(e, this.setAlert);
         }
     }
+
+    async getInventoryByProductId(productId: string): Promise<Inventory[] | ErrorResponse> {
+        try {
+            const response = await this.client.get(`/product/${productId}/inventory`);
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
 }
