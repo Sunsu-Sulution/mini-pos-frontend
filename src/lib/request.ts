@@ -189,6 +189,16 @@ export class BackendClient {
         }
     }
 
+    async onLogout(): Promise<void | ErrorResponse> {
+        try {
+            removeItem("access_token");
+            removeItem("refresh_token");
+            window.location.href = "/";
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
     async listProduct(limit: number, cursor: string, canBeSole: "true" | "false" | "all", query: string): Promise<Pagination<Product> | ErrorResponse> {
         try {
             const response = await this.client.get("/products", {

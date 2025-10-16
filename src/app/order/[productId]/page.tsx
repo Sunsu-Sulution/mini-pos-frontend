@@ -1,23 +1,54 @@
-"use client";
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @next/next/no-img-element */
+"use client";
 import Button from "@/components/Button";
-import React, { useState } from "react";
+import { useHelperContext } from "@/components/providers/helper-provider";
+import { Inventory, isErrorResponse, Product } from "@/types/request";
+import React, { use, useEffect, useState, useCallback } from "react";
 
-const mockProduct = {
-  id: "mock-order-1",
-  name: "บัตร Bearhouse สีแดง",
-  unit: "ใบ",
-  price: 490,
-  available: 2452,
-  image: "/demo/product-1.jpeg",
+type PageProps = {
+  params: Promise<{ productId: string }>;
 };
-export default function OrderPage() {
+
+export default function OrderPage({ params }: PageProps) {
+  const { productId } = use(params);
+  const { setFullLoading, backendClient, userData } = useHelperContext()();
+
+  const [inventory, setInventory] = useState<Inventory>();
+  const [product, setProduct] = useState<Product>();
   const [quantity, setQuantity] = useState(1);
+
+  const fetchProduct = useCallback(async () => {
+    if (!userData.store_id) {
+      return;
+    }
+    setFullLoading(true);
+    const inventories = await backendClient.getInventoryByStoreId(
+      userData.store_id,
+    );
+    if (!isErrorResponse(inventories)) {
+      setInventory(
+        inventories.find((inventory) => inventory.product_id === productId),
+      );
+    }
+
+    const product = await backendClient.getProductById(productId);
+    if (!isErrorResponse(product)) {
+      setProduct(product);
+    }
+    setFullLoading(false);
+  }, [userData.store_id, productId, backendClient, setFullLoading]);
+
+  useEffect(() => {
+    fetchProduct();
+  }, [userData.store_id, product?.id, inventory?.id]);
+
+  useEffect(() => {}, [inventory, product]);
+
   const [isEditing, setIsEditing] = useState(false);
   const [isSummaryExpanded, setIsSummaryExpanded] = useState(true);
-
   const handleIncrease = () => {
-    if (quantity < mockProduct.available) {
+    if (inventory && quantity < inventory.quantity) {
       setQuantity(quantity + 1);
     }
   };
@@ -37,7 +68,8 @@ export default function OrderPage() {
       if (
         !isNaN(numValue) &&
         numValue >= 1 &&
-        numValue <= mockProduct.available
+        inventory &&
+        numValue <= inventory.quantity
       ) {
         setQuantity(numValue);
       }
@@ -55,7 +87,7 @@ export default function OrderPage() {
     setIsEditing(true);
   };
 
-  const totalPrice = quantity * mockProduct.price;
+  const totalPrice = quantity * (product?.price || 0);
 
   return (
     <>
@@ -64,15 +96,16 @@ export default function OrderPage() {
         <div className="bg-white px-3 py-3 rounded-3xl shadow-md flex flex-col gap-3">
           <div className="flex gap-3">
             <img
-              src={mockProduct.image}
-              alt={mockProduct.name}
+              src={product?.image_url}
+              alt={product?.name}
               className="rounded-xl w-24 h-20 object-cover flex-shrink-0"
             />
             <div className="flex-1 min-w-0">
-              <div className="text-3xl truncate">{mockProduct.name}</div>
+              <div className="text-3xl truncate">
+                {product?.name || "กำลังโหลด..."}
+              </div>
               <div className="text-md text-gray-500">
-                เหลืออยู่ {mockProduct.available.toLocaleString()}{" "}
-                {mockProduct.unit}
+                เหลืออยู่ {inventory?.quantity?.toLocaleString() || "0"}
               </div>
             </div>
           </div>
@@ -101,7 +134,7 @@ export default function OrderPage() {
                 }}
                 className="text-2xl font-bold w-full text-center border-2 border-blue-500 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-300"
                 min="1"
-                max={mockProduct.available}
+                max={inventory?.quantity}
                 autoFocus
               />
             ) : (
@@ -155,17 +188,15 @@ export default function OrderPage() {
         >
           <div className="pt-2 pb-5">
             <div className="flex justify-between">
+              <div className="text-xl text-gray-500">ราคาต่อหน่วย</div>
               <div className="text-xl text-gray-500">
-                ราคาต่อ{mockProduct.unit}
-              </div>
-              <div className="text-xl text-gray-500">
-                {mockProduct.price.toLocaleString()} บาท
+                {product?.price?.toLocaleString() || "0"} บาท
               </div>
             </div>
             <div className="flex justify-between">
               <div className="text-xl text-gray-500">จำนวน</div>
               <div className="text-xl text-gray-500">
-                {quantity.toLocaleString()} {mockProduct.unit}
+                {quantity.toLocaleString()} หน่วย
               </div>
             </div>
             <div className="border-t-2 border-dashed border-gray-300 my-4"></div>

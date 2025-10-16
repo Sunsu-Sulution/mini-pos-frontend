@@ -13,6 +13,9 @@ export default function Page() {
   const [password, setPassword] = useState("");
 
   const onLogin = async () => {
+    if (username === "" || password === "") {
+      return;
+    }
     setFullLoading(true);
     const response = await backendClient.login({
       username,
@@ -25,8 +28,14 @@ export default function Page() {
     window.location.reload();
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      onLogin();
+    }
+  };
+
   return (
-    <div className="px-10 pt-20">
+    <div className="px-10 pt-20" onKeyDown={handleKeyDown}>
       <div className="flex justify-center mb-12">
         <img src="/logo.png" alt="logo" className="h-30 w-30" />
       </div>
