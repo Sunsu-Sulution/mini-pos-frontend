@@ -1,4 +1,4 @@
-import { UpdateUserRequest } from './../types/request';
+import { CreateDraftSaleOrderRequest, EditDraftSaleOrderLineRequest, SaleOrder, SaleOrderWithOrderLine, UpdateUserRequest } from './../types/request';
 import axios, { AxiosInstance } from "axios";
 import { getItem, removeItem, setItem } from "./storage";
 import { AddProductRequest, AddStoreRequest, ErrorResponse, initUser, Inventory, InventoryMovement, InventoryRequest, LoginRequest, LoginResponse, MoveProductRequest, MoveProductResponse, Pagination, Product, RegisterRequest, RegisterResponse, Store, UploadFileResponse, User } from "@/types/request";
@@ -357,6 +357,33 @@ export class BackendClient {
     async getInventoryByProductId(productId: string): Promise<Inventory[] | ErrorResponse> {
         try {
             const response = await this.client.get(`/product/${productId}/inventory`);
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
+    async createDraftSaleOrder(payload: CreateDraftSaleOrderRequest): Promise<SaleOrder | ErrorResponse> {
+        try {
+            const response = await this.client.post("/order/draft", payload);
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
+    async getSaleOrderById(id: string): Promise<SaleOrderWithOrderLine | ErrorResponse> {
+        try {
+            const response = await this.client.get(`/sale-order/${id}`);
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
+    async editDraftSaleOrderById(id: string, payload: EditDraftSaleOrderLineRequest): Promise<SaleOrder | ErrorResponse> {
+        try {
+            const response = await this.client.put(`/sale-order/${id}`, payload);
             return response.data;
         } catch (e) {
             return handlerError(e, this.setAlert);

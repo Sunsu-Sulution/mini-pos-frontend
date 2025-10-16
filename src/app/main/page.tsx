@@ -17,7 +17,7 @@ export default function Page() {
     const map = new Map<string, number>();
     inventories.forEach((inv) => {
       const current = map.get(inv.product_id) ?? 0;
-      map.set(inv.product_id, current + inv.quantity);
+      map.set(inv.product_id, current + inv.quantity - inv.reserve);
     });
     return map;
   }, [inventories]);

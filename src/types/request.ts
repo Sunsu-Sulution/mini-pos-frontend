@@ -97,6 +97,7 @@ export interface Inventory {
     store_id: string;
     product_id: string;
     quantity: number;
+    reserve: number;
     created_at: string;
     updated_at: string;
     deleted_at: string;
@@ -140,4 +141,52 @@ export interface UpdateUserRequest {
     password: string;
     role: "user" | "admin";
     store_id: string;
+}
+
+export interface CreateDraftSaleOrderRequest {
+    items: CreateDraftSaleOrderLineRequest[];
+}
+
+export interface CreateDraftSaleOrderLineRequest {
+    product_id: string;
+    quantity: number;
+}
+
+export interface SaleOrderWithOrderLine {
+    sale_order: SaleOrder;
+    sale_order_line: SaleOrderLine[];
+}
+
+export interface SaleOrder {
+    id: string;
+    number: string;
+    store_id: string;
+    user_id: string;
+    status: "draft" | "submit" | "waiting_payment" | "paid" | "cancelled" | "refunded";
+    payment_type: "thai_qr" | "credit_card" | "unspecified";
+    transaction_ref: string;
+    total_amount: number;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string;
+}
+
+export interface SaleOrderLine {
+    id: string;
+    sale_order_id: string;
+    product_id: string;
+    product_name: string;
+    image_url: string;
+    quantity: number;
+    unit_price: number;
+    total_price: number;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string;
+}
+
+export interface EditDraftSaleOrderLineRequest {
+    phone: string;
+    email: string;
+    payment_type: "thai_qr" | "credit_card" | "unspecified";
 }
