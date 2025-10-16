@@ -1,5 +1,5 @@
 
-export const setItem = (key: string, value: string) => {
+export const setItem = (key: string, value: unknown) => {
     try {
         window.localStorage.setItem(key, JSON.stringify(value));
     } catch (error) {

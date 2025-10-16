@@ -1,11 +1,14 @@
+/* eslint-disable @next/next/no-html-link-for-pages */
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @next/next/no-img-element */
 "use client";
 import Input from "@/components/Input";
 import { useHelperContext } from "@/components/providers/helper-provider";
 import { Inventory, isErrorResponse, Product } from "@/types/request";
-import { IconSearch } from "@tabler/icons-react";
-import React, { useEffect, useMemo, useState } from "react";
+import { IconGardenCartFilled, IconSearch } from "@tabler/icons-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { getItem, setItem } from "@/lib/storage";
+import Button from "@/components/Button";
 
 export default function Page() {
   const { backendClient, setFullLoading, userData, setAlert } =
@@ -13,6 +16,13 @@ export default function Page() {
   const [products, setProducts] = useState<Product[]>([]);
   const [inventories, setInventories] = useState<Inventory[]>([]);
   const [searchText, setSearchText] = useState("");
+  const [cart, setCart] = useState<Record<string, number>>({});
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState<string>("");
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const cartCount = useMemo(() => {
+    return Object.values(cart).reduce((sum, qty) => sum + qty, 0);
+  }, [cart]);
   const productIdToQuantity = useMemo(() => {
     const map = new Map<string, number>();
     inventories.forEach((inv) => {
@@ -34,6 +44,23 @@ export default function Page() {
 
   useEffect(() => {
     fetchProducts();
+  }, [userData.store_id]);
+
+  useEffect(() => {
+    if (editingProductId && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [editingProductId]);
+
+  useEffect(() => {
+    if (!userData.store_id) return;
+    const saved = getItem(`cart:${userData.store_id}`);
+    if (saved && typeof saved === "object") {
+      setCart(saved as Record<string, number>);
+    } else {
+      setCart({});
+    }
   }, [userData.store_id]);
 
   const fetchProducts = async () => {
@@ -66,6 +93,82 @@ export default function Page() {
     );
   };
 
+  const getAvailable = (productId: string) => {
+    return productIdToQuantity.get(productId) ?? 0;
+  };
+
+  const getQty = (productId: string) => {
+    return cart[productId] ?? 0;
+  };
+
+  const persistCart = (next: Record<string, number>) => {
+    if (!userData.store_id) return;
+    setItem(`cart:${userData.store_id}`, next);
+  };
+
+  const inc = (productId: string) => {
+    setCart((prev) => {
+      const next = { ...prev };
+      const current = next[productId] ?? 0;
+      const available = getAvailable(productId);
+      if (current < available) {
+        next[productId] = current + 1;
+        persistCart(next);
+      }
+      return next;
+    });
+  };
+
+  const dec = (productId: string) => {
+    setCart((prev) => {
+      const next = { ...prev };
+      const current = next[productId] ?? 0;
+      if (current > 0) {
+        const updated = current - 1;
+        if (updated === 0) {
+          delete next[productId];
+        } else {
+          next[productId] = updated;
+        }
+        persistCart(next);
+      }
+      return next;
+    });
+  };
+
+  const startEdit = (productId: string, currentQty: number) => {
+    setEditingProductId(productId);
+    setEditingValue(String(currentQty));
+  };
+
+  const cancelEdit = () => {
+    setEditingProductId(null);
+    setEditingValue("");
+  };
+
+  const commitEdit = (productId: string, available: number) => {
+    const raw = editingValue.trim();
+    if (raw === "") {
+      cancelEdit();
+      return;
+    }
+    let nextQty = Number.parseInt(raw, 10);
+    if (Number.isNaN(nextQty)) nextQty = 0;
+    if (nextQty < 0) nextQty = 0;
+    if (nextQty > available) nextQty = available;
+    setCart((prev) => {
+      const next = { ...prev };
+      if (nextQty === 0) {
+        delete next[productId];
+      } else {
+        next[productId] = nextQty;
+      }
+      persistCart(next);
+      return next;
+    });
+    cancelEdit();
+  };
+
   return (
     <div className="px-4 py-6">
       <div className="bg-white py-5 px-8 text-xl rounded-xl shadow-md mb-6 flex items-center justify-between">
@@ -83,8 +186,20 @@ export default function Page() {
           ออกจากระบบ
         </div>
       </div>
-      <div className="text-4xl mb-4">สินค้าทั้งหมด</div>
-
+      <div className="flex items-center mb-4 justify-between">
+        <div className="text-4xl">สินค้าทั้งหมด</div>
+        <a href="/order" className="cursor-pointer mr-4 relative">
+          <IconGardenCartFilled size={35} />
+          {cartCount > 0 && (
+            <div
+              className="absolute bottom-0 bg-text-primary text-white text-xs rounded-full flex justify-center items-center"
+              style={{ width: 18, height: 18, right: -3 }}
+            >
+              {cartCount}
+            </div>
+          )}
+        </a>
+      </div>
       <div className="flex gap-4 mb-6">
         <Input
           placeholder="ค้นหารายการสินค้าด้วย sku, ชื่อสินค้า"
@@ -102,8 +217,7 @@ export default function Page() {
           .map((product) => {
             const available = productIdToQuantity.get(product.id) ?? 0;
             return (
-              <a
-                href={`/order/${product.id}`}
+              <div
                 key={product.id}
                 className="flex bg-white px-3 py-3 rounded-xl shadow-md justify-between"
               >
@@ -120,10 +234,56 @@ export default function Page() {
                     </div>
                   </div>
                 </div>
-                <div className="text-xl text-gray-500">
-                  คงเหลือ {available.toLocaleString()}
+                <div className="flex flex-col items-end">
+                  <div
+                    className="text-xl text-gray-500 w-full"
+                    style={{ textAlign: "end", paddingRight: 5 }}
+                  >
+                    คงเหลือ {available.toLocaleString()}
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Button
+                      className="px-4"
+                      text="-"
+                      onClick={() => dec(product.id)}
+                      disabled={getQty(product.id) === 0}
+                    />
+                    {editingProductId === product.id ? (
+                      <input
+                        ref={inputRef}
+                        className="min-w-16 w-16 text-center text-xl border rounded-md py-1"
+                        type="number"
+                        min={0}
+                        max={available}
+                        value={editingValue}
+                        onChange={(e) => setEditingValue(e.target.value)}
+                        onBlur={() => commitEdit(product.id, available)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter")
+                            commitEdit(product.id, available);
+                          if (e.key === "Escape") cancelEdit();
+                        }}
+                      />
+                    ) : (
+                      <div
+                        className="min-w-8 text-center text-xl cursor-pointer select-none"
+                        title="แก้ไขจำนวน"
+                        onClick={() =>
+                          startEdit(product.id, getQty(product.id))
+                        }
+                      >
+                        {getQty(product.id)}
+                      </div>
+                    )}
+                    <Button
+                      className="px-4"
+                      text="+"
+                      onClick={() => inc(product.id)}
+                      disabled={getQty(product.id) >= available}
+                    />
+                  </div>
                 </div>
-              </a>
+              </div>
             );
           })}
       </div>
