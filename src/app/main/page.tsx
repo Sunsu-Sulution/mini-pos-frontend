@@ -7,7 +7,7 @@ import { useHelperContext } from "@/components/providers/helper-provider";
 import { Inventory, isErrorResponse, Product } from "@/types/request";
 import { IconGardenCartFilled, IconSearch } from "@tabler/icons-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { getItem, setItem } from "@/lib/storage";
+import { getItem, setItem, removeItem } from "@/lib/storage";
 import Button from "@/components/Button";
 
 export default function Page() {
@@ -169,6 +169,19 @@ export default function Page() {
     cancelEdit();
   };
 
+  const clearCart = () => {
+    if (!userData.store_id) return;
+    setAlert(
+      "ยืนยัน",
+      "ต้องการล้างสินค้าในตะกร้าทั้งหมดใช่หรือไม่",
+      () => {
+        setCart({});
+        removeItem(`cart:${userData.store_id}`);
+      },
+      true,
+    );
+  };
+
   return (
     <div className="px-4 py-6">
       <div className="bg-white py-5 px-8 text-xl rounded-xl shadow-md mb-6 flex items-center justify-between">
@@ -200,7 +213,7 @@ export default function Page() {
           )}
         </a>
       </div>
-      <div className="flex gap-4 mb-6">
+      <div className="flex gap-4 mb-3">
         <Input
           placeholder="ค้นหารายการสินค้าด้วย sku, ชื่อสินค้า"
           className="w-full"
@@ -210,7 +223,12 @@ export default function Page() {
           onChange={setSearchText}
         />
       </div>
-
+      <div
+        className="text-gray-500 text-md underline mb-3 cursor-pointer flex justify-end"
+        onClick={clearCart}
+      >
+        ล้างสินค้าในตะกร้า
+      </div>
       <div className="flex flex-col gap-4">
         {filteredProducts
           .filter((product) => (productIdToQuantity.get(product.id) ?? 0) > 0)

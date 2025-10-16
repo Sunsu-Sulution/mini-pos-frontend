@@ -297,7 +297,7 @@ export default function OrderPage() {
                 {cartProducts
                   .reduce((sum, p) => sum + (cart[p.id] ?? 0), 0)
                   .toLocaleString()}{" "}
-                หน่วย
+                ชิ้น
               </div>
             </div>
             <div className="border-t-2 border-dashed border-gray-300 my-4"></div>
