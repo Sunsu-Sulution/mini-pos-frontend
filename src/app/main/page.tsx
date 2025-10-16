@@ -55,7 +55,7 @@ export default function Page() {
 
   useEffect(() => {
     if (!userData.store_id) return;
-    const saved = getItem(`cart:${userData.store_id}`);
+    const saved = getItem(`cart`);
     if (saved && typeof saved === "object") {
       setCart(saved as Record<string, number>);
     } else {
@@ -103,7 +103,7 @@ export default function Page() {
 
   const persistCart = (next: Record<string, number>) => {
     if (!userData.store_id) return;
-    setItem(`cart:${userData.store_id}`, next);
+    setItem(`cart`, next);
   };
 
   const inc = (productId: string) => {
@@ -176,7 +176,7 @@ export default function Page() {
       "ต้องการล้างสินค้าในตะกร้าทั้งหมดใช่หรือไม่",
       () => {
         setCart({});
-        removeItem(`cart:${userData.store_id}`);
+        removeItem(`cart`);
       },
       true,
     );

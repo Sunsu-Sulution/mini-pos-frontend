@@ -23,7 +23,7 @@ export default function OrderPage() {
 
   useEffect(() => {
     if (!userData.store_id) return;
-    const saved = getItem(`cart:${userData.store_id}`);
+    const saved = getItem(`cart`);
     if (saved && typeof saved === "object") {
       setCart(saved as Record<string, number>);
     } else {
@@ -94,7 +94,7 @@ export default function OrderPage() {
 
   const persistCart = (next: Record<string, number>) => {
     if (!userData.store_id) return;
-    setItem(`cart:${userData.store_id}`, next);
+    setItem(`cart`, next);
   };
 
   const inc = (productId: string) => {
