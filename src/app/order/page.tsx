@@ -189,7 +189,7 @@ export default function OrderPage() {
               return (
                 <div
                   key={p.id}
-                  className="flex bg-white px-3 py-3 rounded-xl shadow-md justify-between"
+                  className="flex flex-col md:flex-row bg-white px-3 py-3 rounded-xl shadow-md justify-between"
                 >
                   <div className="flex items-center gap-3">
                     <img
@@ -211,7 +211,7 @@ export default function OrderPage() {
                     >
                       คงเหลือ {available.toLocaleString()}
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center justify-between md:justify-start gap-4">
                       <Button
                         className="px-4"
                         text="-"
