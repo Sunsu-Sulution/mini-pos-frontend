@@ -13,6 +13,7 @@ import {
 } from "react";
 import { useFullLoadingContext } from "./full-loading-provider";
 import { useAlertContext } from "./alert-provider";
+import { getItem } from "@/lib/storage";
 
 interface HelperContextType {
   setAlert: (
@@ -34,7 +35,6 @@ const HelperContext = createContext<() => HelperContextType>(() => {
     setAlert: () => {},
     setFullLoading: () => {},
     backendClient: new BackendClient(() => {}),
-    // Default placeholder; real router is provided by HelperProvider
     router: {} as ReturnType<typeof useRouter>,
     userData: initUser(),
     title: "sunsu merchandise",
@@ -56,6 +56,10 @@ export function HelperProvider({ children }: { children: ReactNode }) {
       const isError = isErrorResponse(response);
       if (isError) {
         return;
+      }
+
+      if (getItem("process_sale_order")) {
+        router.push(`/order/payment/${getItem("process_sale_order")}`);
       }
 
       if (window.location.pathname === "/") {

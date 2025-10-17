@@ -4,7 +4,7 @@
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import { useHelperContext } from "@/components/providers/helper-provider";
-import { getItem, setItem } from "@/lib/storage";
+import { getItem, removeItem, setItem } from "@/lib/storage";
 import { Inventory, isErrorResponse, Product } from "@/types/request";
 import {
   IconPhoneFilled,
@@ -221,6 +221,8 @@ export default function Page() {
         if (isErrorResponse(saleOrder)) {
           return;
         }
+        removeItem("cart");
+        setItem("process_sale_order", saleOrder.id);
         window.location.href = `/order/payment/${saleOrder.id}`;
       },
       true,
@@ -408,6 +410,7 @@ export default function Page() {
           className="w-full"
           onClick={onSubmit}
           text="ยืนยันคำสั่งซื้อ"
+          disabled={selectedPayment === "unspecified"}
           icon={<img src="/icon-bearhouse-1.png" alt="icon" />}
         />
       </div>

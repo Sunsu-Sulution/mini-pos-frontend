@@ -194,6 +194,7 @@ export class BackendClient {
             removeItem("access_token");
             removeItem("refresh_token");
             removeItem("cart");
+            removeItem("process_sale_order");
             window.location.href = "/";
         } catch (e) {
             return handlerError(e, this.setAlert);
