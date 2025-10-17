@@ -5,11 +5,12 @@ import Button from "@/components/Button";
 import { useHelperContext } from "@/components/providers/helper-provider";
 import { Inventory, isErrorResponse, Product } from "@/types/request";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { getItem, setItem } from "@/lib/storage";
+import { getItem, removeItem, setItem } from "@/lib/storage";
 import { useRouter } from "next/navigation";
 
 export default function OrderPage() {
-  const { setFullLoading, backendClient, userData } = useHelperContext()();
+  const { setFullLoading, backendClient, userData, setAlert } =
+    useHelperContext()();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [inventories, setInventories] = useState<Inventory[]>([]);
@@ -164,10 +165,32 @@ export default function OrderPage() {
     window.location.href = `/order/member`;
   };
 
+  const clearCart = () => {
+    if (!userData.store_id) return;
+    setAlert(
+      "ยืนยัน",
+      "ต้องการล้างสินค้าในตะกร้าทั้งหมดใช่หรือไม่",
+      () => {
+        setCart({});
+        removeItem(`cart`);
+      },
+      true,
+    );
+  };
+
   return (
     <>
       <div className="px-4 py-6">
-        <div className="text-4xl mb-4">ตะกร้าของฉัน</div>
+        <div className="mb-4 flex justify-between items-center">
+          <div className="text-4xl">ตะกร้าของฉัน</div>
+          <div
+            className="text-gray-500 text-md underline cursor-pointer flex justify-end"
+            onClick={clearCart}
+          >
+            ล้างสินค้าในตะกร้า
+          </div>
+        </div>
+
         <div className="flex flex-col gap-3">
           {cartProducts.length === 0 ? (
             <div className="text-gray-500">ไม่มีสินค้าในตะกร้า</div>
@@ -249,7 +272,7 @@ export default function OrderPage() {
 
       <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 bg-white px-4 pb-6 shadow-md rounded-t-3xl select-none w-[100vw] md:w-[600px]">
         <div
-          className="flex justify-between items-center py-7 cursor-pointer"
+          className="flex justify-between items-center py-5 cursor-pointer"
           onClick={() => setIsSummaryExpanded(!isSummaryExpanded)}
         >
           <div className="text-2xl">สรุปคำสั่งซื้อ</div>

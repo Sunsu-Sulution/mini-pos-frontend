@@ -169,19 +169,6 @@ export default function Page() {
     cancelEdit();
   };
 
-  const clearCart = () => {
-    if (!userData.store_id) return;
-    setAlert(
-      "ยืนยัน",
-      "ต้องการล้างสินค้าในตะกร้าทั้งหมดใช่หรือไม่",
-      () => {
-        setCart({});
-        removeItem(`cart`);
-      },
-      true,
-    );
-  };
-
   return (
     <div className="px-4 py-6">
       <div className="bg-white py-5 px-8 text-xl rounded-xl shadow-md mb-6 flex items-center justify-between">
@@ -222,12 +209,6 @@ export default function Page() {
           value={searchText}
           onChange={setSearchText}
         />
-      </div>
-      <div
-        className="text-gray-500 text-md underline mb-3 cursor-pointer flex justify-end"
-        onClick={clearCart}
-      >
-        ล้างสินค้าในตะกร้า
       </div>
       <div className="flex flex-col gap-4">
         {filteredProducts
