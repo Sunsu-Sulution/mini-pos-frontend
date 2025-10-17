@@ -161,18 +161,7 @@ export default function OrderPage() {
   };
 
   const onCreateDraft = async () => {
-    const items = Object.entries(cart)
-      .filter(([, qty]) => qty > 0)
-      .map(([product_id, quantity]) => ({ product_id, quantity }));
-    if (items.length === 0) return;
-
-    setFullLoading(true);
-    const response = await backendClient.createDraftSaleOrder({ items });
-    setFullLoading(false);
-    if (isErrorResponse(response)) {
-      return;
-    }
-    window.location.href = `/order/member/${response.id}`;
+    window.location.href = `/order/member`;
   };
 
   return (
