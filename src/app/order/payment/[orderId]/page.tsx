@@ -1,14 +1,24 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import Button from "@/components/Button";
-import React, { useState, useEffect } from "react";
+import { useHelperContext } from "@/components/providers/helper-provider";
+import { removeItem } from "@/lib/storage";
+import { isErrorResponse, SaleOrder } from "@/types/request";
+import React, { useState, useEffect, use } from "react";
 
 const mockQrCode = {
   image: "/demo/qr-code.png",
 };
 
-export default function Page() {
+type PageProps = {
+  params: Promise<{ orderId: string }>;
+};
+
+export default function Page({ params }: PageProps) {
+  const { orderId } = use(params);
+  const { setFullLoading, backendClient, setAlert } = useHelperContext()();
   const [timeLeft, setTimeLeft] = useState(15 * 60);
+  const [saleOrder, setSaleOrder] = useState<SaleOrder>();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -23,6 +33,20 @@ export default function Page() {
 
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    fetchSaleOrder();
+  }, []);
+
+  const fetchSaleOrder = async () => {
+    setFullLoading(true);
+    const response = await backendClient.getSaleOrderById(orderId);
+    if (isErrorResponse(response)) {
+      return;
+    }
+    setSaleOrder(response.sale_order);
+    setFullLoading(false);
+  };
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -44,20 +68,28 @@ export default function Page() {
         </div>
         <img src={mockQrCode.image} alt="qr-code" className="h-60" />
         <div className="text-white text-2xl text-center bg-text-primary px-6">
-          Invoice#51271 <br />
-          ยอดชำระ 490.00 บาท <br />
+          No. {saleOrder?.number} <br />
+          ยอดชำระ {saleOrder?.total_amount.toLocaleString()} บาท <br />
         </div>
         <div
           className="text-gray-500 text-xl underline"
           onClick={() => {
-            window.location.href = "/payment/failed";
+            setAlert(
+              "กรุณายืนยัน",
+              "คุณต้องการที่จะยกเลิกรายการนี้ใช่หรือไม่",
+              () => {
+                removeItem("process_sale_order");
+                window.location.href = "/payment/failed";
+              },
+              true,
+            );
           }}
         >
           ยกเลิกรายการ
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 px-10 pb-4">
+      {/* <div className="flex flex-col gap-3 px-10 pb-4">
         <Button
           text="Test Payment Completed"
           onClick={() => {
@@ -70,7 +102,7 @@ export default function Page() {
             window.location.href = "/payment/failed";
           }}
         />
-      </div>
+      </div> */}
     </div>
   );
 }
