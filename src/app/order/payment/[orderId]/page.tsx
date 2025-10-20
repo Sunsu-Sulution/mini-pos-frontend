@@ -3,12 +3,8 @@
 "use client";
 import { useHelperContext } from "@/components/providers/helper-provider";
 import { removeItem } from "@/lib/storage";
-import { isErrorResponse, SaleOrder } from "@/types/request";
+import { Charge, isErrorResponse, SaleOrder } from "@/types/request";
 import React, { useState, useEffect, use } from "react";
-
-const mockQrCode = {
-  image: "/demo/qr-code.png",
-};
 
 type PageProps = {
   params: Promise<{ orderId: string }>;
@@ -17,8 +13,9 @@ type PageProps = {
 export default function Page({ params }: PageProps) {
   const { orderId } = use(params);
   const { setFullLoading, backendClient, setAlert } = useHelperContext()();
-  const [timeLeft, setTimeLeft] = useState(15 * 60);
+  const [timeLeft, setTimeLeft] = useState(0);
   const [saleOrder, setSaleOrder] = useState<SaleOrder>();
+  const [charge, setCharge] = useState<Charge>();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -38,13 +35,51 @@ export default function Page({ params }: PageProps) {
     fetchSaleOrder();
   }, []);
 
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        fetchSaleOrder();
+      } catch (error) {
+        console.error("Error fetching order status:", error);
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [orderId, backendClient]);
+
   const fetchSaleOrder = async () => {
     setFullLoading(true);
     const response = await backendClient.getSaleOrderById(orderId);
     if (isErrorResponse(response)) {
       return;
     }
+    if (response.charge.status === "successful") {
+      removeItem("cart");
+      removeItem("process_sale_order");
+      window.location.href = `/order/payment/${orderId}/completed`;
+    }
+
+    if (
+      response.charge.status === "expired" ||
+      response.charge.status === "failed" ||
+      response.charge.status === "reversed"
+    ) {
+      removeItem("cart");
+      removeItem("process_sale_order");
+      window.location.href = `/order/payment/${orderId}/failed`;
+    }
+
     setSaleOrder(response.sale_order);
+    setCharge(response.charge);
+    if (response?.charge?.expired_at) {
+      const expiredTime = new Date(response.charge.expired_at).getTime();
+      const now = Date.now();
+      const diffSeconds = Math.max(0, Math.floor((expiredTime - now) / 1000));
+      setTimeLeft(diffSeconds);
+    } else {
+      setTimeLeft(0);
+    }
+
     setFullLoading(false);
   };
 
@@ -66,7 +101,9 @@ export default function Page({ params }: PageProps) {
         <div className="border-2 border-gray-500 p-4 rounded-2xl flex flex-col items-center">
           <div className="text-2xl">ชำระภายใน {formatTime(timeLeft)}</div>
         </div>
-        <img src={mockQrCode.image} alt="qr-code" className="h-60" />
+        {charge?.qr_code && (
+          <img src={charge.qr_code} alt="qr-code" className="w-70" />
+        )}
         <div className="text-white text-2xl text-center bg-text-primary px-6">
           No. {saleOrder?.number} <br />
           ยอดชำระ {saleOrder?.total_amount.toLocaleString()} บาท <br />

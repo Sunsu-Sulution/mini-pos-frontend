@@ -152,9 +152,24 @@ export interface CreateDraftSaleOrderLineRequest {
     quantity: number;
 }
 
+export interface Charge {
+    id: string;
+    sale_order_id: string;
+    amount: number;
+    fee: number;
+    fee_vat: number;
+    qr_code: string;
+    status: "pending" | "failed" | "expired" | "reversed" | "successful";
+    expired_at: string;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string;
+}
+
 export interface SaleOrderWithOrderLine {
     sale_order: SaleOrder;
     sale_order_line: SaleOrderLine[];
+    charge: Charge;
 }
 
 export interface SaleOrder {
@@ -189,4 +204,8 @@ export interface EditDraftSaleOrderLineRequest {
     phone: string;
     email: string;
     payment_type: "thai_qr" | "credit_card" | "unspecified";
+}
+
+export interface EditDraftSaleOrderLineResponse {
+    sale_order: SaleOrder;
 }

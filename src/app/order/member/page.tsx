@@ -221,9 +221,8 @@ export default function Page() {
         if (isErrorResponse(saleOrder)) {
           return;
         }
-        removeItem("cart");
-        setItem("process_sale_order", saleOrder.id);
-        window.location.href = `/order/payment/${saleOrder.id}`;
+        setItem("process_sale_order", saleOrder.sale_order.id);
+        window.location.href = `/order/payment/${saleOrder.sale_order.id}`;
       },
       true,
     );

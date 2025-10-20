@@ -1,4 +1,4 @@
-import { CreateDraftSaleOrderRequest, EditDraftSaleOrderLineRequest, SaleOrder, SaleOrderWithOrderLine, UpdateUserRequest } from './../types/request';
+import { CreateDraftSaleOrderRequest, EditDraftSaleOrderLineRequest, EditDraftSaleOrderLineResponse, SaleOrder, SaleOrderWithOrderLine, UpdateUserRequest } from './../types/request';
 import axios, { AxiosInstance } from "axios";
 import { getItem, removeItem, setItem } from "./storage";
 import { AddProductRequest, AddStoreRequest, ErrorResponse, initUser, Inventory, InventoryMovement, InventoryRequest, LoginRequest, LoginResponse, MoveProductRequest, MoveProductResponse, Pagination, Product, RegisterRequest, RegisterResponse, Store, UploadFileResponse, User } from "@/types/request";
@@ -383,7 +383,7 @@ export class BackendClient {
         }
     }
 
-    async editDraftSaleOrderById(id: string, payload: EditDraftSaleOrderLineRequest): Promise<SaleOrder | ErrorResponse> {
+    async editDraftSaleOrderById(id: string, payload: EditDraftSaleOrderLineRequest): Promise<EditDraftSaleOrderLineResponse | ErrorResponse> {
         try {
             const response = await this.client.put(`/sale-order/${id}`, payload);
             return response.data;
