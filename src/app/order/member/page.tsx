@@ -4,7 +4,7 @@
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import { useHelperContext } from "@/components/providers/helper-provider";
-import { getItem, removeItem, setItem } from "@/lib/storage";
+import { getItem, setItem } from "@/lib/storage";
 import { Inventory, isErrorResponse, Product } from "@/types/request";
 import {
   IconPhoneFilled,
@@ -45,6 +45,7 @@ export default function Page() {
   >("unspecified");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [requestTaxInvoice, setRequestTaxInvoice] = useState(false);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [inventories, setInventories] = useState<Inventory[]>([]);
@@ -214,7 +215,7 @@ export default function Page() {
           draftSaleOrder.id,
           {
             phone: phone,
-            email: email,
+            email: requestTaxInvoice ? email : "",
             payment_type: selectedPayment,
           },
         );
@@ -244,15 +245,33 @@ export default function Page() {
           />
         </div>
         <div className="flex flex-col gap-2 mt-4">
-          <div className="text-2xl">อีเมลสำหรับขอใบเสร็จรับเงิน</div>
-          <Input
-            value={email}
-            onChange={setEmail}
-            type="email"
-            inputMode="email"
-            icon={<IconMailFilled />}
-            placeholder="อีเมล"
-          />
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="requestTaxInvoice"
+              checked={requestTaxInvoice}
+              onChange={(e) => setRequestTaxInvoice(e.target.checked)}
+              className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+            />
+            <label
+              htmlFor="requestTaxInvoice"
+              className="text-2xl cursor-pointer"
+            >
+              ขอใบเสร็จรับเงิน
+            </label>
+          </div>
+          {requestTaxInvoice && (
+            <div className="flex flex-col gap-2">
+              <Input
+                value={email}
+                onChange={setEmail}
+                type="email"
+                inputMode="email"
+                icon={<IconMailFilled />}
+                placeholder="อีเมล"
+              />
+            </div>
+          )}
         </div>
       </div>
 
