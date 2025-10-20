@@ -1,5 +1,5 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @next/next/no-img-element */
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 import Button from "@/components/Button";
 import { useHelperContext } from "@/components/providers/helper-provider";
@@ -9,7 +9,7 @@ import {
   SaleOrder,
   SaleOrderLine,
 } from "@/types/request";
-import { IconCircleCheckFilled, IconEye } from "@tabler/icons-react";
+import { IconEye } from "@tabler/icons-react";
 import React, { use, useEffect, useState } from "react";
 
 type PageProps = {
@@ -23,6 +23,7 @@ export default function Page({ params }: PageProps) {
   const [saleOrder, setSaleOrder] = useState<SaleOrder>();
   const [charge, setCharge] = useState<Charge>();
   const [saleOrderLine, setSaleOrderLine] = useState<SaleOrderLine[]>();
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     fetchSaleOrder();
@@ -49,8 +50,10 @@ export default function Page({ params }: PageProps) {
   return (
     <div className="px-1 pt-4">
       <div className="bg-white p-8 m-8 mt-0 rounded-2xl flex flex-col justify-center items-center gap-5 shadow-md">
-        <IconCircleCheckFilled size={100} className="text-green-500" />
-        <div className="text-4xl">การชำระเงินสำเร็จ</div>
+        <div className="flex gap-2 flex-col items-center">
+          <img src="/logo.png" alt="logo-bearhouse" className="w-14 h-14" />
+          <div className="text-4xl">รายการสั่งซื้อ</div>
+        </div>
         <div className="w-full">
           <div className="text-white text-2xl text-center bg-text-primary px-6">
             No. {saleOrder?.number}
@@ -111,17 +114,6 @@ export default function Page({ params }: PageProps) {
             className="px-4 mt-4"
           />
         </div>
-      </div>
-
-      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 bg-white px-4 pt-9 pb-6 shadow-md rounded-t-3xl select-none w-[100vw] md:w-[600px]">
-        <Button
-          className="w-full"
-          onClick={() => {
-            window.location.href = "/main";
-          }}
-          text="กลับหน้าหลัก"
-          icon={<img src="/icon-bearhouse-2.png" alt="icon" />}
-        />
       </div>
     </div>
   );

@@ -51,6 +51,9 @@ export function HelperProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const fetchUserData = async () => {
+      if (window.location.pathname.startsWith("/public")) {
+        return;
+      }
       const backendClient = new BackendClient(setAlert);
       const response = await backendClient.getUserInfo();
       const isError = isErrorResponse(response);

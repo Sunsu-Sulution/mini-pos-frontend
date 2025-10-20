@@ -181,6 +181,8 @@ export interface SaleOrder {
     payment_type: "thai_qr" | "credit_card" | "unspecified";
     transaction_ref: string;
     total_amount: number;
+    customer_phone: string;
+    customer_email: string;
     created_at: string;
     updated_at: string;
     deleted_at: string;
