@@ -37,7 +37,7 @@ const HelperContext = createContext<() => HelperContextType>(() => {
     backendClient: new BackendClient(() => {}),
     router: {} as ReturnType<typeof useRouter>,
     userData: initUser(),
-    title: "sunsu merchandise",
+    title: "bearhouse merchandise",
     setTitle: () => {},
   };
 });
@@ -117,10 +117,10 @@ export function HelperProvider({ children }: { children: ReactNode }) {
 
   const onSetTitle = (text: string) => {
     if (!text) {
-      document.title = "sunsu merchandise";
-      setTitle("sunsu merchandise");
+      document.title = "bearhouse merchandise";
+      setTitle("bearhouse merchandise");
     }
-    document.title = "sunsu merchandise - " + text;
+    document.title = "bearhouse merchandise - " + text;
     setTitle(text);
   };
 

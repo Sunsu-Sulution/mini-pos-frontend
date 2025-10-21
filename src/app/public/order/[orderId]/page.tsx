@@ -104,11 +104,8 @@ export default function Page({ params }: PageProps) {
           </div>
 
           <Button
-            text={
-              <>
-                <IconEye size={20} className="mr-2" /> Preview ใบเสร็จรับเงิน
-              </>
-            }
+            text={<>Preview ใบเสร็จรับเงิน</>}
+            icon={<img src="/icon-bearhouse-1.png" alt="icon" />}
             onClick={handlePreviewReceipt}
             className="px-4 mt-4"
           />

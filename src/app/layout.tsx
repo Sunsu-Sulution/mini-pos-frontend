@@ -6,8 +6,8 @@ import { AlertDialogProvider } from "@/components/providers/alert-provider";
 import { HelperProvider } from "@/components/providers/helper-provider";
 
 export const metadata: Metadata = {
-  title: "sunsu merchandise",
-  description: "sunsu merchandise v1.0.0",
+  title: "bearhouse merchandise",
+  description: "subearhousensu merchandise",
 };
 
 export default function RootLayout({
