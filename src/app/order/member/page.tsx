@@ -13,6 +13,7 @@ import {
   IconCheck,
 } from "@tabler/icons-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 const paymentMethods = [
   {
@@ -40,6 +41,7 @@ const paymentMethods = [
 export default function Page() {
   const { setFullLoading, backendClient, userData, router, setAlert } =
     useHelperContext()();
+  const searchParams = useSearchParams();
   const [selectedPayment, setSelectedPayment] = useState<
     "credit_card" | "thai_qr" | "unspecified"
   >("unspecified");
@@ -66,6 +68,21 @@ export default function Page() {
     }
     setHasLoadedCart(true);
   }, [userData.store_id]);
+
+  // Read query parameters and populate form fields
+  useEffect(() => {
+    const phoneParam = searchParams.get("phone");
+    const emailParam = searchParams.get("email");
+
+    if (phoneParam) {
+      setPhone(phoneParam);
+    }
+
+    if (emailParam) {
+      setEmail(emailParam);
+      setRequestTaxInvoice(true); // Auto-check tax invoice if email is provided
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (!hasLoadedCart) return;

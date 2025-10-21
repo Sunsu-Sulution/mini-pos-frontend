@@ -23,7 +23,6 @@ export default function Page({ params }: PageProps) {
   const [saleOrder, setSaleOrder] = useState<SaleOrder>();
   const [charge, setCharge] = useState<Charge>();
   const [saleOrderLine, setSaleOrderLine] = useState<SaleOrderLine[]>();
-  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     fetchSaleOrder();

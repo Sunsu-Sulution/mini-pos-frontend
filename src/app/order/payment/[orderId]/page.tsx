@@ -39,14 +39,14 @@ export default function Page({ params }: PageProps) {
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        fetchSaleOrder(true);
+        await checkOmiseStatus();
       } catch (error) {
-        console.error("Error fetching order status:", error);
+        console.error("Error checking Omise status:", error);
       }
     }, 5000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [charge?.id]);
 
   const fetchSaleOrder = async (isManualRefresh = false) => {
     if (isManualRefresh) {
@@ -55,47 +55,131 @@ export default function Page({ params }: PageProps) {
       setFullLoading(true);
     }
 
-    const response = await backendClient.getSaleOrderById(orderId);
-    if (isErrorResponse(response)) {
+    try {
+      const response = await backendClient.getSaleOrderById(orderId);
+      if (isErrorResponse(response)) {
+        if (isManualRefresh) {
+          setIsRefreshing(false);
+        } else {
+          setFullLoading(false);
+        }
+        return;
+      }
+
+      if (response.charge.status === "successful") {
+        removeItem("cart");
+        removeItem("process_sale_order");
+        window.location.href = `/order/payment/${orderId}/completed`;
+        return;
+      }
+
+      if (
+        response.charge.status === "expired" ||
+        response.charge.status === "failed" ||
+        response.charge.status === "reversed"
+      ) {
+        removeItem("cart");
+        removeItem("process_sale_order");
+        window.location.href = `/order/payment/${orderId}/failed`;
+        return;
+      }
+
+      setSaleOrder(response.sale_order);
+      setCharge(response.charge);
+
+      if (response?.charge?.expired_at) {
+        const expiredTime = new Date(response.charge.expired_at).getTime();
+        const now = Date.now();
+        const diffSeconds = Math.max(0, Math.floor((expiredTime - now) / 1000));
+        setTimeLeft(diffSeconds);
+      } else {
+        setTimeLeft(0);
+      }
+
+      if (response.charge?.id) {
+        await checkOmiseStatus(response.charge.id);
+      }
+    } catch (error) {
+      console.error("Error fetching order status:", error);
+    } finally {
       if (isManualRefresh) {
         setIsRefreshing(false);
       } else {
         setFullLoading(false);
       }
-      return;
     }
-    if (response.charge.status === "successful") {
-      removeItem("cart");
-      removeItem("process_sale_order");
-      window.location.href = `/order/payment/${orderId}/completed`;
-    }
+  };
 
-    if (
-      response.charge.status === "expired" ||
-      response.charge.status === "failed" ||
-      response.charge.status === "reversed"
-    ) {
-      removeItem("cart");
-      removeItem("process_sale_order");
-      window.location.href = `/order/payment/${orderId}/failed`;
-    }
+  const checkOmiseStatus = async (chargeId?: string) => {
+    const currentChargeId = chargeId || charge?.id;
+    if (!currentChargeId) return;
 
-    setSaleOrder(response.sale_order);
-    setCharge(response.charge);
-    if (response?.charge?.expired_at) {
-      const expiredTime = new Date(response.charge.expired_at).getTime();
-      const now = Date.now();
-      const diffSeconds = Math.max(0, Math.floor((expiredTime - now) / 1000));
-      setTimeLeft(diffSeconds);
-    } else {
-      setTimeLeft(0);
-    }
+    try {
+      const omiseStatus = await backendClient.getOmiseChargeStatus(
+        currentChargeId,
+      );
+      if (!isErrorResponse(omiseStatus) && charge) {
+        const updatedCharge = { ...charge, ...omiseStatus };
+        setCharge(updatedCharge);
 
-    if (isManualRefresh) {
-      setIsRefreshing(false);
-    } else {
-      setFullLoading(false);
+        if (omiseStatus.status === "successful") {
+          removeItem("cart");
+          removeItem("process_sale_order");
+          window.location.href = `/order/payment/${orderId}/completed`;
+          return;
+        }
+
+        if (
+          omiseStatus.status === "expired" ||
+          omiseStatus.status === "failed" ||
+          omiseStatus.status === "reversed"
+        ) {
+          removeItem("cart");
+          removeItem("process_sale_order");
+          window.location.href = `/order/payment/${orderId}/failed`;
+          return;
+        }
+      }
+    } catch (error) {
+      console.error("Error checking Omise status:", error);
     }
+  };
+
+  const cancelSaleOrder = async () => {
+    setAlert(
+      "กรุณายืนยัน",
+      "คุณต้องการที่จะยกเลิกรายการนี้ใช่หรือไม่",
+      async () => {
+        setFullLoading(true);
+        const response = await backendClient.cancelSaleOrderById(orderId);
+        setFullLoading(true);
+        if (isErrorResponse(response)) {
+          return;
+        }
+        removeItem("cart");
+        removeItem("process_sale_order");
+        window.location.href = `/order/payment/${orderId}/failed`;
+      },
+      true,
+    );
+  };
+
+  const changePaymentMethod = async () => {
+    setAlert(
+      "กรุณายืนยัน",
+      "คุณต้องการที่จะเปลี่ยนวิธีการชำระเงินนี้ใช่หรือไม่",
+      async () => {
+        setFullLoading(true);
+        const response = await backendClient.cancelSaleOrderById(orderId);
+        setFullLoading(true);
+        if (isErrorResponse(response)) {
+          return;
+        }
+        removeItem("process_sale_order");
+        window.location.href = `/order/member?phone=${saleOrder?.customer_phone}&email=${saleOrder?.customer_email}`;
+      },
+      true,
+    );
   };
 
   const formatTime = (seconds: number) => {
@@ -117,7 +201,7 @@ export default function Page({ params }: PageProps) {
           className="border-2 border-gray-500 p-4 rounded-2xl flex items-center"
           title="รีเฟรชข้อมูล"
           disabled={isRefreshing}
-          onClick={() => fetchSaleOrder(true)}
+          onClick={() => checkOmiseStatus()}
         >
           <div className="text-2xl flex items-center gap-3">
             ชำระภายใน {formatTime(timeLeft)}
@@ -149,21 +233,19 @@ export default function Page({ params }: PageProps) {
           No. {saleOrder?.number} <br />
           ยอดชำระ {saleOrder?.total_amount.toLocaleString()} บาท <br />
         </div>
-        <div
-          className="text-gray-500 text-xl underline"
-          onClick={() => {
-            setAlert(
-              "กรุณายืนยัน",
-              "คุณต้องการที่จะยกเลิกรายการนี้ใช่หรือไม่",
-              () => {
-                removeItem("process_sale_order");
-                window.location.href = "/payment/failed";
-              },
-              true,
-            );
-          }}
-        >
-          ยกเลิกรายการ
+        <div className="flex gap-6">
+          <div
+            className="text-gray-500 text-xl underline"
+            onClick={changePaymentMethod}
+          >
+            เปลี่ยนวิธีการชำระเงิน
+          </div>
+          <div
+            className="text-gray-500 text-xl underline"
+            onClick={cancelSaleOrder}
+          >
+            ยกเลิกรายการ
+          </div>
         </div>
       </div>
 

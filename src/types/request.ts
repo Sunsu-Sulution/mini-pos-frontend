@@ -211,3 +211,27 @@ export interface EditDraftSaleOrderLineRequest {
 export interface EditDraftSaleOrderLineResponse {
     sale_order: SaleOrder;
 }
+
+// Omise API types
+export interface OmiseChargeResponse {
+    id: string;
+    status: 'pending' | 'successful' | 'failed' | 'expired' | 'reversed';
+    amount: number;
+    currency: string;
+    paid: boolean;
+    authorized: boolean;
+    refunded: number;
+    failure_code?: string;
+    failure_message?: string;
+    created_at: string;
+    expires_at?: string;
+    expired: boolean;
+    net: number;
+    fee: number;
+    fee_vat: number;
+}
+
+export interface OmiseErrorResponse {
+    error: string;
+    code?: string;
+}

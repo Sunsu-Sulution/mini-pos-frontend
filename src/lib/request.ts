@@ -1,4 +1,4 @@
-import { CreateDraftSaleOrderRequest, EditDraftSaleOrderLineRequest, EditDraftSaleOrderLineResponse, SaleOrder, SaleOrderWithOrderLine, UpdateUserRequest } from './../types/request';
+import { CreateDraftSaleOrderRequest, EditDraftSaleOrderLineRequest, EditDraftSaleOrderLineResponse, OmiseChargeResponse, SaleOrder, SaleOrderWithOrderLine, UpdateUserRequest } from './../types/request';
 import axios, { AxiosInstance } from "axios";
 import { getItem, removeItem, setItem } from "./storage";
 import { AddProductRequest, AddStoreRequest, ErrorResponse, initUser, Inventory, InventoryMovement, InventoryRequest, LoginRequest, LoginResponse, MoveProductRequest, MoveProductResponse, Pagination, Product, RegisterRequest, RegisterResponse, Store, UploadFileResponse, User } from "@/types/request";
@@ -386,6 +386,24 @@ export class BackendClient {
     async editDraftSaleOrderById(id: string, payload: EditDraftSaleOrderLineRequest): Promise<EditDraftSaleOrderLineResponse | ErrorResponse> {
         try {
             const response = await this.client.put(`/sale-order/${id}`, payload);
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
+    async getOmiseChargeStatus(chargeId: string): Promise<OmiseChargeResponse | ErrorResponse> {
+        try {
+            const response = await axios.get(`/api/charge/${chargeId}`);
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
+    async cancelSaleOrderById(id: string): Promise<void | ErrorResponse> {
+        try {
+            const response = await this.client.post(`/sale-order/${id}/cancel`);
             return response.data;
         } catch (e) {
             return handlerError(e, this.setAlert);
