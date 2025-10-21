@@ -69,7 +69,6 @@ export default function Page() {
     setHasLoadedCart(true);
   }, [userData.store_id]);
 
-  // Read query parameters and populate form fields
   useEffect(() => {
     const phoneParam = searchParams.get("phone");
     const emailParam = searchParams.get("email");
@@ -80,7 +79,7 @@ export default function Page() {
 
     if (emailParam) {
       setEmail(emailParam);
-      setRequestTaxInvoice(true); // Auto-check tax invoice if email is provided
+      setRequestTaxInvoice(true);
     }
   }, [searchParams]);
 

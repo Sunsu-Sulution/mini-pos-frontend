@@ -65,6 +65,12 @@ export function HelperProvider({ children }: { children: ReactNode }) {
         router.push(`/order/payment/${getItem("process_sale_order")}`);
       }
 
+      if (getItem("process_upload_sale_order")) {
+        router.push(
+          `/order/payment/${getItem("process_upload_sale_order")}/completed`,
+        );
+      }
+
       if (window.location.pathname === "/") {
         if (response.id !== "") {
           if (response.role === "admin") {

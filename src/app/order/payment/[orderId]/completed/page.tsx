@@ -9,8 +9,14 @@ import {
   SaleOrder,
   SaleOrderLine,
 } from "@/types/request";
-import { IconCircleCheckFilled, IconEye } from "@tabler/icons-react";
-import React, { use, useEffect, useState } from "react";
+import {
+  IconCircleCheckFilled,
+  IconEye,
+  IconUpload,
+  IconX,
+} from "@tabler/icons-react";
+import React, { use, useEffect, useRef, useState } from "react";
+import { removeItem, setItem } from "@/lib/storage";
 
 type PageProps = {
   params: Promise<{ orderId: string }>;
@@ -24,7 +30,12 @@ export default function Page({ params }: PageProps) {
   const [charge, setCharge] = useState<Charge>();
   const [saleOrderLine, setSaleOrderLine] = useState<SaleOrderLine[]>();
 
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [isDragActive, setIsDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   useEffect(() => {
+    setItem("process_upload_sale_order", orderId);
     fetchSaleOrder();
   }, []);
 
@@ -44,6 +55,70 @@ export default function Page({ params }: PageProps) {
     window.open(
       `${process.env.NEXT_PUBLIC_BACKEND_PATH}/sale-order/${orderId}/receipt`,
     );
+  };
+
+  const handleFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const newFiles = Array.from(files);
+    setUploadedFiles((prev) => [...prev, ...newFiles]);
+  };
+
+  const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+    handleFiles(e.dataTransfer.files);
+  };
+
+  const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(true);
+  };
+
+  const onDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+  };
+
+  const onPickFile = () => {
+    fileInputRef.current?.click();
+  };
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFiles(e.target.files);
+  };
+
+  const removeFile = (index: number) => {
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadDocuments = async () => {
+    if (uploadedFiles.length === 0) return;
+
+    setFullLoading(true);
+    try {
+      const uploadPromises = uploadedFiles.map((file) =>
+        backendClient.uploadDocumentFile(
+          file,
+          "sale-order",
+          orderId,
+          "sale-attachment",
+        ),
+      );
+
+      const responses = await Promise.all(uploadPromises);
+      const hasError = responses.some((response) => isErrorResponse(response));
+      if (hasError) {
+        setFullLoading(false);
+        return;
+      }
+
+      setFullLoading(false);
+    } catch {
+      setFullLoading(false);
+    }
   };
 
   return (
@@ -100,27 +175,95 @@ export default function Page({ params }: PageProps) {
             <span className="text-text-primary">รวมทั้งสิ้น</span>{" "}
             {saleOrder?.total_amount.toLocaleString()} บาท
           </div>
-
-          <Button
-            text={
-              <>
-                <IconEye size={20} className="mr-2" /> Preview ใบเสร็จรับเงิน
-              </>
-            }
-            onClick={handlePreviewReceipt}
-            className="px-4 mt-4"
-          />
         </div>
+      </div>
+
+      <div className="bg-white p-8 m-8 rounded-2xl shadow-md">
+        <div className="text-2xl mb-4 text-center">อัพโหลดเอกสารเพิ่มเติม</div>
+
+        <div
+          className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+            isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300"
+          }`}
+          onDrop={onDrop}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onClick={onPickFile}
+        >
+          <IconUpload size={48} className="mx-auto mb-4 text-gray-400" />
+          <div className="text-lg text-gray-600 mb-2">
+            คลิกเพื่ออัพโหลดเอกสารเพิ่มเติม
+          </div>
+        </div>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+          onChange={onFileChange}
+          className="hidden"
+        />
+
+        {uploadedFiles.length > 0 && (
+          <div className="mt-6">
+            <div className="text-lg mb-3">ไฟล์ที่เลือก:</div>
+            <div className="space-y-2">
+              {uploadedFiles.map((file, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between bg-gray-50 p-3 rounded-lg"
+                >
+                  <div className="flex items-center">
+                    <IconUpload size={20} className="mr-3 text-gray-500" />
+                    <span className="text-xl">{file.name}</span>
+                    <span className="text-md text-gray-500 ml-2">
+                      ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => removeFile(index)}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    <IconX size={20} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="mb-30 bg-white p-8 py-3 m-8 rounded-2xl shadow-md">
+        <Button
+          text={
+            <>
+              <IconEye size={20} className="mr-2" /> Preview ใบเสร็จรับเงิน
+            </>
+          }
+          onClick={handlePreviewReceipt}
+          className="px-4"
+        />
       </div>
 
       <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 bg-white px-4 pt-9 pb-6 shadow-md rounded-t-3xl select-none w-[100vw] md:w-[600px]">
         <Button
-          className="w-full"
-          onClick={() => {
+          className={`w-full ${
+            uploadedFiles.length === 0 ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+          onClick={async () => {
+            if (uploadedFiles.length === 0) return;
+            await uploadDocuments();
+            removeItem("process_upload_sale_order");
             window.location.href = "/main";
           }}
-          text="กลับหน้าหลัก"
+          text={
+            uploadedFiles.length === 0
+              ? "กรุณาอัพโหลดเอกสารอย่างน้อย 1 ไฟล์"
+              : "อัพโหลดเอกสารเพิิ่มเติม"
+          }
           icon={<img src="/icon-bearhouse-2.png" alt="icon" />}
+          disabled={uploadedFiles.length === 0}
         />
       </div>
     </div>

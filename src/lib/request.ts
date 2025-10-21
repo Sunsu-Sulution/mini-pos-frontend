@@ -409,4 +409,32 @@ export class BackendClient {
             return handlerError(e, this.setAlert);
         }
     }
+
+    async uploadDocumentFile(
+        file: File,
+        ref: string,
+        refId: string,
+        bucket: string = "upload",
+    ): Promise<UploadFileResponse | ErrorResponse> {
+        try {
+            const form = new FormData();
+            form.append("file", file);
+            form.append("bucket", bucket);
+            form.append("ref", ref);
+            form.append("ref_id", refId);
+
+            const uploadClient = axios.create({
+                baseURL: process.env.NEXT_PUBLIC_BACKEND_PATH,
+                headers: {
+                    Authorization: `Bearer ${getItem("access_token")}`,
+                },
+            });
+
+            const response = await uploadClient.post("/upload/document", form);
+
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
 }
