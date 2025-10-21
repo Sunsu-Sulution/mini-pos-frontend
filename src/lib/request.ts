@@ -410,6 +410,15 @@ export class BackendClient {
         }
     }
 
+    async completeSaleOrderCreditCard(id: string): Promise<void | ErrorResponse> {
+        try {
+            const response = await this.client.post(`/payment/complete-credit-card/${id}`);
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
     async uploadDocumentFile(
         file: File,
         ref: string,

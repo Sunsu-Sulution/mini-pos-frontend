@@ -35,7 +35,6 @@ export default function Page({ params }: PageProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    setItem("process_upload_sale_order", orderId);
     fetchSaleOrder();
   }, []);
 
@@ -134,12 +133,12 @@ export default function Page({ params }: PageProps) {
         <div className="w-full text-xl text-gray-500">
           <div>
             <span className="mt-4 text-text-primary">Transaction</span>{" "}
-            {charge?.id}
+            {charge?.id || "credit card"}
           </div>
 
           <div>
             <span className="mt-4 text-text-primary">เวลา</span>{" "}
-            {charge?.updated_at}
+            {saleOrder?.created_at}
           </div>
 
           {saleOrder?.customer_phone && (
@@ -223,7 +222,7 @@ export default function Page({ params }: PageProps) {
                   </div>
                   <button
                     onClick={() => removeFile(index)}
-                    className="text-red-500 hover:text-red-700"
+                    className="text-red-500"
                   >
                     <IconX size={20} />
                   </button>
