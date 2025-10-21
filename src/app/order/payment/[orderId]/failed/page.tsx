@@ -72,7 +72,7 @@ export default function Page({ params }: PageProps) {
         <div className="w-full text-xl text-gray-500">
           <div>
             <span className="mt-4 text-text-primary">เหตุผล</span>{" "}
-            {charge?.status}
+            {charge?.status || "failed"}
           </div>
 
           <div className="mt-4 text-text-primary">รายการ</div>

@@ -133,7 +133,7 @@ export default function Page({ params }: PageProps) {
         <div className="w-full text-xl text-gray-500">
           <div>
             <span className="mt-4 text-text-primary">Transaction</span>{" "}
-            {charge?.id || "credit card"}
+            {charge?.id || "Credit Card"}
           </div>
 
           <div>

@@ -61,12 +61,12 @@ export default function Page({ params }: PageProps) {
         <div className="w-full text-xl text-gray-500">
           <div>
             <span className="mt-4 text-text-primary">Transaction</span>{" "}
-            {charge?.id}
+            {charge?.id || "Credit Card"}
           </div>
 
           <div>
             <span className="mt-4 text-text-primary">เวลา</span>{" "}
-            {charge?.updated_at}
+            {saleOrder?.created_at}
           </div>
 
           {saleOrder?.customer_phone && (
@@ -106,7 +106,7 @@ export default function Page({ params }: PageProps) {
           <Button
             text={
               <>
-                <IconEye size={20} /> Preview ใบเสร็จรับเงิน
+                <IconEye size={20} className="mr-2" /> Preview ใบเสร็จรับเงิน
               </>
             }
             onClick={handlePreviewReceipt}
