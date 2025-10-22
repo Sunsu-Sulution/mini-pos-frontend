@@ -16,7 +16,7 @@ import {
   IconX,
 } from "@tabler/icons-react";
 import React, { use, useEffect, useRef, useState } from "react";
-import { removeItem, setItem } from "@/lib/storage";
+import { removeItem, setItem, getItem } from "@/lib/storage";
 
 type PageProps = {
   params: Promise<{ orderId: string }>;
@@ -32,11 +32,44 @@ export default function Page({ params }: PageProps) {
 
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isDragActive, setIsDragActive] = useState(false);
+  const [isUploadCompleted, setIsUploadCompleted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     fetchSaleOrder();
+    checkUploadStatus();
   }, []);
+
+  const checkUploadStatus = () => {
+    const uploadStatus = getItem(`upload_completed_${orderId}`);
+    const uploadedFilesData = getItem(`uploaded_files_${orderId}`);
+
+    if (uploadStatus === "true") {
+      setIsUploadCompleted(true);
+      if (uploadedFilesData) {
+        try {
+          const fileInfo = JSON.parse(uploadedFilesData);
+          // Convert file info back to File-like objects for display
+          const files = fileInfo.map(
+            (info: {
+              name: string;
+              size: number;
+              type: string;
+              lastModified: number;
+            }) => ({
+              name: info.name,
+              size: info.size,
+              type: info.type,
+              lastModified: info.lastModified,
+            }),
+          );
+          setUploadedFiles(files);
+        } catch (error) {
+          console.error("Error parsing uploaded files data:", error);
+        }
+      }
+    }
+  };
 
   const fetchSaleOrder = async () => {
     setFullLoading(true);
@@ -114,6 +147,17 @@ export default function Page({ params }: PageProps) {
         return;
       }
 
+      setIsUploadCompleted(true);
+      setItem(`upload_completed_${orderId}`, "true");
+
+      // Store only the necessary file information
+      const fileInfo = uploadedFiles.map((file) => ({
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        lastModified: file.lastModified,
+      }));
+      setItem(`uploaded_files_${orderId}`, JSON.stringify(fileInfo));
       setFullLoading(false);
     } catch {
       setFullLoading(false);
@@ -177,93 +221,146 @@ export default function Page({ params }: PageProps) {
         </div>
       </div>
 
-      <div className="bg-white p-8 m-8 rounded-2xl shadow-md">
-        <div className="text-2xl mb-4 text-center">อัพโหลดเอกสารเพิ่มเติม</div>
-
-        <div
-          className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-            isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300"
-          }`}
-          onDrop={onDrop}
-          onDragOver={onDragOver}
-          onDragLeave={onDragLeave}
-          onClick={onPickFile}
-        >
-          <IconUpload size={48} className="mx-auto mb-4 text-gray-400" />
-          <div className="text-lg text-gray-600 mb-2">
-            คลิกเพื่ออัพโหลดเอกสารเพิ่มเติม
+      {!isUploadCompleted && (
+        <div className="bg-white p-8 m-8 rounded-2xl shadow-md">
+          <div className="text-2xl mb-4 text-center">
+            อัพโหลดเอกสารเพิ่มเติม
           </div>
+
+          <div
+            className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+              isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300"
+            }`}
+            onDrop={onDrop}
+            onDragOver={onDragOver}
+            onDragLeave={onDragLeave}
+            onClick={onPickFile}
+          >
+            <IconUpload size={48} className="mx-auto mb-4 text-gray-400" />
+            <div className="text-lg text-gray-600 mb-2">
+              คลิกเพื่ออัพโหลดเอกสารเพิ่มเติม
+            </div>
+          </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+            onChange={onFileChange}
+            className="hidden"
+          />
+
+          {uploadedFiles.length > 0 && (
+            <div className="mt-6">
+              <div className="text-lg mb-3">ไฟล์ที่เลือก:</div>
+              <div className="space-y-2">
+                {uploadedFiles.map((file, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between bg-gray-50 p-3 rounded-lg"
+                  >
+                    <div className="flex items-center">
+                      <IconUpload size={20} className="mr-3 text-gray-500" />
+                      <span className="text-xl">{file.name}</span>
+                      <span className="text-md text-gray-500 ml-2">
+                        ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => removeFile(index)}
+                      className="text-red-500"
+                    >
+                      <IconX size={20} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
+      )}
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-          onChange={onFileChange}
-          className="hidden"
-        />
+      {isUploadCompleted && (
+        <div className="bg-white p-8 m-8 rounded-2xl shadow-md">
+          <div className="text-2xl mb-4 text-center">
+            อัพโหลดเอกสารเสร็จสิ้น
+          </div>
 
-        {uploadedFiles.length > 0 && (
           <div className="mt-6">
-            <div className="text-lg mb-3">ไฟล์ที่เลือก:</div>
+            <div className="text-lg mb-3 text-gray-700">
+              ไฟล์ที่อัพโหลดแล้ว:
+            </div>
             <div className="space-y-2">
               {uploadedFiles.map((file, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between bg-gray-50 p-3 rounded-lg"
+                  className="flex items-center justify-between p-3 rounded-lg border-2 "
                 >
                   <div className="flex items-center">
-                    <IconUpload size={20} className="mr-3 text-gray-500" />
-                    <span className="text-xl">{file.name}</span>
-                    <span className="text-md text-gray-500 ml-2">
+                    <IconUpload size={20} className="mr-3" />
+                    <span className="text-xl text-green-800">{file.name}</span>
+                    <span className="text-md ml-2">
                       ({(file.size / 1024 / 1024).toFixed(2)} MB)
                     </span>
                   </div>
-                  <button
-                    onClick={() => removeFile(index)}
-                    className="text-red-500"
-                  >
-                    <IconX size={20} />
-                  </button>
+                  <div className="text-green-600 text-sm">
+                    ✓ อัพโหลดเสร็จแล้ว
+                  </div>
                 </div>
               ))}
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      <div className="mb-30 bg-white p-8 py-3 m-8 rounded-2xl shadow-md">
-        <Button
-          text={
-            <>
-              <IconEye size={20} className="mr-2" /> Preview ใบเสร็จรับเงิน
-            </>
-          }
-          onClick={handlePreviewReceipt}
-          className="px-4"
-        />
-      </div>
+      {isUploadCompleted && (
+        <div className="mb-30 bg-white p-8 py-3 m-8 rounded-2xl shadow-md">
+          <Button
+            text={
+              <>
+                <IconEye size={20} className="mr-2" /> Preview ใบเสร็จรับเงิน
+              </>
+            }
+            onClick={handlePreviewReceipt}
+            className="px-4"
+          />
+        </div>
+      )}
+
+      <div className="pt-20"></div>
 
       <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 bg-white px-4 pt-9 pb-6 shadow-md rounded-t-3xl select-none w-[100vw] md:w-[600px]">
-        <Button
-          className={`w-full ${
-            uploadedFiles.length === 0 ? "opacity-50 cursor-not-allowed" : ""
-          }`}
-          onClick={async () => {
-            if (uploadedFiles.length === 0) return;
-            await uploadDocuments();
-            removeItem("process_upload_sale_order");
-            window.location.href = "/main";
-          }}
-          text={
-            uploadedFiles.length === 0
-              ? "กรุณาอัพโหลดเอกสารอย่างน้อย 1 ไฟล์"
-              : "อัพโหลดเอกสารเพิิ่มเติม"
-          }
-          icon={<img src="/icon-bearhouse-2.png" alt="icon" />}
-          disabled={uploadedFiles.length === 0}
-        />
+        {isUploadCompleted ? (
+          <Button
+            className="w-full"
+            onClick={() => {
+              removeItem("process_upload_sale_order");
+              removeItem(`upload_completed_${orderId}`);
+              removeItem(`uploaded_files_${orderId}`);
+              window.location.href = "/main";
+            }}
+            text="ยืนยัน"
+            icon={<img src="/icon-bearhouse-2.png" alt="icon" />}
+          />
+        ) : (
+          <Button
+            className={`w-full ${
+              uploadedFiles.length === 0 ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+            onClick={async () => {
+              if (uploadedFiles.length === 0) return;
+              await uploadDocuments();
+            }}
+            text={
+              uploadedFiles.length === 0
+                ? "กรุณาอัพโหลดเอกสารอย่างน้อย 1 ไฟล์"
+                : "อัพโหลดเอกสารเพิิ่มเติม"
+            }
+            icon={<img src="/icon-bearhouse-2.png" alt="icon" />}
+            disabled={uploadedFiles.length === 0}
+          />
+        )}
       </div>
     </div>
   );
