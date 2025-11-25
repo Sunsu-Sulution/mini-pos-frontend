@@ -106,7 +106,7 @@ export default function Page() {
                   window.location.href = `product/${p.id}`;
                 }}
                 key={p.id}
-                className="border-2 border-text-primary rounded-xl p-4 bg-white flex gap-4 items-center"
+                className="rounded-xl p-4 bg-white flex gap-4 items-center shadow-md"
               >
                 <img
                   src={p.image_url}
