@@ -446,4 +446,21 @@ export class BackendClient {
             return handlerError(e, this.setAlert);
         }
     }
+
+    async listSaleOrder(limit: number, cursor: string, query: string, date: string, status: string): Promise<Pagination<SaleOrder> | ErrorResponse> {
+        try {
+            const response = await this.client.get("/sale-orders", {
+                params: {
+                    limit,
+                    cursor,
+                    query,
+                    date,
+                    status
+                }
+            });
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
 }
