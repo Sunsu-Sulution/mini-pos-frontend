@@ -1,155 +1,95 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
-import { useEffect, useRef } from "react";
-import { Chart, ChartConfiguration, registerables } from "chart.js";
 import Button from "@/components/Button";
 import Select from "@/components/Select";
-
-Chart.register(...registerables);
+import DateSelect from "@/components/DateSelect";
+import Graph from "@/components/Graph";
+import { useEffect, useState } from "react";
+import { SellCycle } from "@/types/request";
 
 export default function Page() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const chartRef = useRef<Chart | null>(null);
+  const [dateCycle, setDateCycle] = useState<Date>();
+  const [cycles, setCycles] = useState<SellCycle[]>([]);
 
-  useEffect(() => {
-    const ctx = canvasRef.current?.getContext("2d");
-    if (!ctx) return;
+  const [summaryOption, setSummaryOption] = useState<"day" | "month">("day");
 
-    const formatBahtParts = (value: number) => [
-      value.toLocaleString("th-TH"),
-      "บาท",
-    ];
-
-    const fontFamily = "'DBHeaventRounded', 'Prompt', sans-serif";
-    const baseFont = {
-      family: fontFamily,
-      size: 15,
-    };
-
-    const valueLabelPlugin = {
-      id: "valueLabel",
-      afterDatasetsDraw: (chart: Chart) => {
-        const { ctx } = chart;
-        ctx.save();
-        ctx.font = `${baseFont.size}px ${baseFont.family}`;
-        ctx.fillStyle = "#8c532a";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "bottom";
-
-        chart.data.datasets.forEach((dataset, datasetIndex) => {
-          const meta = chart.getDatasetMeta(datasetIndex);
-          meta.data.forEach((element, index) => {
-            const bar = element;
-            if (!bar) return;
-
-            const rawValue = dataset.data?.[index];
-            const numericValue =
-              typeof rawValue === "number" ? rawValue : Number(rawValue ?? 0);
-            const [amount] = formatBahtParts(numericValue);
-            ctx.fillText(amount, bar.x, bar.y - 6);
-          });
-        });
-
-        ctx.restore();
-      },
-    };
-
-    const config: ChartConfiguration<"bar"> = {
-      type: "bar",
-      data: {
-        labels: [
-          "January",
-          "February",
-          "March",
-          "April",
-          "May",
-          "June",
-          "July",
-        ],
-        datasets: [
-          {
-            label: "ยอดขาย",
-            data: [1300, 2539, 800, 811, 536, 525, 4320],
-            backgroundColor: ["rgb(0, 166, 61)"],
-            hoverBackgroundColor: ["rgb(0, 166, 61)"],
-          },
-        ],
-      },
-      plugins: [valueLabelPlugin],
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            align: "center",
-            labels: {
-              usePointStyle: true,
-              color: "#8c532a",
-              font: baseFont,
-            },
-            display: false,
-          },
-          tooltip: {
-            bodyFont: baseFont,
-            titleFont: baseFont,
-            callbacks: {
-              label: (context) => {
-                const value = Number(context.raw ?? 0);
-                const [amount, unit] = formatBahtParts(value);
-                if (context.dataset.label) {
-                  return [`${context.dataset.label}: ${amount}`, unit];
-                }
-                return [amount, unit];
-              },
-            },
-          },
-        },
-        scales: {
-          x: {
-            border: {
-              display: false,
-            },
-            grid: {
-              display: false,
-            },
-            ticks: {
-              color: "#8c532a",
-              font: baseFont,
-            },
-          },
-          y: {
-            beginAtZero: true,
-            ticks: {
-              stepSize: 2000,
-              color: "#8c532a",
-              font: baseFont,
-              callback: (value) => formatBahtParts(Number(value)),
-            },
-            border: {
-              display: false,
-            },
-            grid: {
-              color: "#8c532a55",
-            },
-          },
-        },
-      },
-    };
-
-    chartRef.current = new Chart(ctx, config);
-
-    return () => {
-      chartRef.current?.destroy();
-    };
-  }, []);
+  const [dateOrder, setDateOrder] = useState<Date>();
+  const [statusOrder, setStatusOrder] = useState<
+    "draft" | "submit" | "waiting_payment" | "paid" | "cancelled" | "refunded"
+  >();
 
   return (
     <div className="px-4 py-6">
       <div className="text-4xl mb-6">สรุปยอดการขาย</div>
-      <Button className="mb-6" text="ปิดรอบการขาย" onClick={() => {}} />
 
-      <div className="text-2xl mb-3">สรุปผล</div>
+      {/* start cycle */}
+      <div className="flex justify-between items-center mb-3">
+        <div className="text-2xl mb-3">รอบการขาย</div>
+        <DateSelect onChange={setDateCycle} placeholder="เลือกวันที่" />
+      </div>
+      {cycles.length === 0 && (
+        <div className="text-center">ยังไม่มีรอบการขายที่บันทึกไว้</div>
+      )}
+      {cycles.map((cycle) => {
+        return (
+          <div
+            className="bg-white rounded-md p-3 shadow-md mt-3 flex justify-between"
+            key={cycle.refCode}
+          >
+            <div className="">
+              <div className="text-md text-gray-400">Reference Code</div>
+              <div className="text-xl flex items-center gap-2">
+                <div>{cycle.refCode}</div>
+              </div>
+            </div>
+            <div className="flex flex-col items-end justify-end">
+              <div className="text-md text-gray-400">{cycle.time}</div>
+              <div className="text-xl">฿{cycle.amount.toLocaleString()}</div>
+            </div>
+          </div>
+        );
+      })}
+      <Button
+        className="mb-6 mt-6"
+        text="ปิดรอบการขาย"
+        icon={<img src="/icon-bearhouse-1.png" alt="icon" />}
+        onClick={() => {}}
+      />
+      {/* end cycle */}
+
+      {/* start summary */}
+      <div className="flex justify-between items-center mb-3 mt-12">
+        <div className="text-2xl mb-3">สรุปผล</div>
+        <Select
+          selections={[
+            {
+              name: "รายวัน",
+              value: "day",
+            },
+            {
+              name: "รายเดือน",
+              value: "month",
+            },
+          ]}
+          onChange={(value) =>
+            setSummaryOption(value as unknown as "day" | "month")
+          }
+        />
+      </div>
       <div className="h-[300px] max-w-5xl mb-6 bg-white px-5 pr-7 py-6 rounded-md shadow-md">
-        <canvas ref={canvasRef} />
+        <Graph
+          labels={[
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+          ]}
+          datas={[1300, 2539, 800, 811, 536, 525, 4320]}
+          formatPart={(value: number) => [value.toLocaleString("th-TH"), "บาท"]}
+        />
       </div>
       <div className="flex justify-between gap-2 mb-6">
         <div className="bg-white w-[50%] rounded-md pt-3 pb-4 px-3 shadow-md">
@@ -217,22 +157,47 @@ export default function Page() {
           </div>
         </div>
       </div>
+      {/* end summary */}
 
-      <div className="flex justify-between items-center">
-        <div className="text-2xl">รายการการขายที่ขายได้</div>
-        <Select
-          selections={[
-            {
-              name: "all",
-              value: "all",
-            },
-            {
-              name: "test",
-              value: "test",
-            },
-          ]}
-          onChange={() => {}}
-        />
+      <div className="flex flex-col justify-start items-start gap-2 mb-2 mt-12">
+        <div className="text-2xl">รายการที่ขายได้</div>
+        <div className="flex gap-2">
+          {/* "draft" | "submit" | "waiting_payment" | "paid" | "cancelled" | "refunded" */}
+          <Select
+            selections={[
+              {
+                name: "ทั้งหมด",
+                value: "all",
+              },
+              {
+                name: "ฉบับร่าง",
+                value: "draft",
+              },
+              {
+                name: "ส่งแล้ว",
+                value: "submit",
+              },
+              {
+                name: "รอชำระเงิน",
+                value: "waiting_payment",
+              },
+              {
+                name: "ชำระเงินแล้ว",
+                value: "paid",
+              },
+              {
+                name: "ยกเลิก",
+                value: "cancelled",
+              },
+              {
+                name: "คืนเงิน",
+                value: "refunded",
+              },
+            ]}
+            onChange={(value) => setStatusOrder(value.value)}
+          />
+          <DateSelect onChange={setDateOrder} placeholder="เลือกวันที่" />
+        </div>
       </div>
       <div className="bg-white rounded-md p-3 shadow-md mt-3 flex justify-between">
         <div className="">
@@ -245,7 +210,7 @@ export default function Page() {
           </div>
         </div>
         <div className="flex flex-col items-end justify-end">
-          <div className="text-md text-gray-400">25/11/2025</div>
+          <div className="text-md text-gray-400">23:23</div>
           <div className="text-xl">฿200.34</div>
         </div>
       </div>

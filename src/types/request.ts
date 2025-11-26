@@ -235,3 +235,10 @@ export interface OmiseErrorResponse {
     error: string;
     code?: string;
 }
+
+export interface SellCycle {
+    refCode: string;
+    date: string;
+    time: string;
+    amount: number;
+}
