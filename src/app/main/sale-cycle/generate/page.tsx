@@ -95,7 +95,24 @@ export default function Page() {
       `กรุณายืนยันการปิดรอบการขายจำนวน ${(
         response?.sale_cycle.total_amount ?? 0
       ).toLocaleString()} บาท`,
-      () => {},
+      async () => {
+        setFullLoading(true);
+        const saleCycle = await backendClient.closeSaleCycle(
+          response?.sale_cycle.total_amount ?? 0,
+        );
+        setFullLoading(false);
+        if (isErrorResponse(saleCycle)) {
+          return;
+        }
+        setAlert(
+          "สำเร็จ",
+          "ปิดยอดการขายสำเร็จแล้ว",
+          () => {
+            window.location.href = "/main/summary";
+          },
+          false,
+        );
+      },
       true,
     );
   };

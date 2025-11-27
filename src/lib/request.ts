@@ -486,4 +486,15 @@ export class BackendClient {
             return handlerError(e, this.setAlert);
         }
     }
+
+    async closeSaleCycle(confirmPrice: number): Promise<GenerateSaleCycleResponse | ErrorResponse> {
+        try {
+            const response = await this.client.post("/sale-cycle/close", {
+                "confirm_price": confirmPrice
+            });
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
 }
