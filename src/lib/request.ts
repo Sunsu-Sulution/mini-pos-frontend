@@ -478,13 +478,9 @@ export class BackendClient {
         }
     }
 
-    async generteSaleCycle(date: string): Promise<GenerateSaleCycleResponse | ErrorResponse> {
+    async generteSaleCycle(): Promise<GenerateSaleCycleResponse | ErrorResponse> {
         try {
-            const response = await this.client.get("/sale-cycle/generate", {
-                params: {
-                    date
-                }
-            });
+            const response = await this.client.get("/sale-cycle/generate");
             return response.data;
         } catch (e) {
             return handlerError(e, this.setAlert);

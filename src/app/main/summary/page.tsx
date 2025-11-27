@@ -13,9 +13,7 @@ import {
   SaleOrderWithOrderLine,
 } from "@/types/request";
 import Input from "@/components/Input";
-import {
-  IconSearch,
-} from "@tabler/icons-react";
+import { IconSearch } from "@tabler/icons-react";
 import { useHelperContext } from "@/components/providers/helper-provider";
 import Link from "next/link";
 
@@ -42,7 +40,7 @@ const statusDisplay: Record<StatusOrder, { label: string; className: string }> =
 
 const formatTime = (value: string) => {
   const date = new Date(value);
-  return date.toLocaleTimeString("th-TH", {
+  return date.toLocaleDateString("th-TH", {
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -289,7 +287,7 @@ export default function Page() {
   };
 
   const onCloseSaleCycle = () => {
-    window.location.href = `/main/sale-cycle/${formatDateQuery(dateCycle)}`;
+    window.location.href = `/main/sale-cycle/generate`;
   };
 
   return (
@@ -486,7 +484,7 @@ export default function Page() {
                     >
                       <div>
                         <p className="text-sm uppercase tracking-wide text-gray-400">
-                          {order.payment_type.split("_").join(" ")}
+                          {order.payment_type.split("_").join(" ")}{" "}
                         </p>
                         <div className="flex items-center gap-2 text-xl ">
                           <span>{order.number}</span>
@@ -515,6 +513,11 @@ export default function Page() {
                           </p>
                         </div>
                       </div>
+                    </div>
+                    <div className="text-sm text-gray-400">
+                      {order.sale_cycle_id && (
+                        <>บันทึกยอดขายแล้ว ({order.sale_cycle_id})</>
+                      )}
                     </div>
                     {isExpanded && details && (
                       <div className="mt-4 pt-4 text-base">

@@ -10,15 +10,10 @@ import {
 } from "@/types/request";
 import {
   IconAlertSmall,
-  IconCalendarWeek,
   IconCashBanknote,
   IconShoppingCart,
 } from "@tabler/icons-react";
-import React, { use, useEffect, useState } from "react";
-
-type PageProps = {
-  params: Promise<{ date: string }>;
-};
+import React, { useEffect, useState } from "react";
 
 type StatusOrder =
   | "draft"
@@ -43,15 +38,14 @@ const statusDisplay: Record<StatusOrder, { label: string; className: string }> =
 
 const formatTime = (value: string) => {
   const date = new Date(value);
-  return date.toLocaleTimeString("th-TH", {
+  return date.toLocaleDateString("th-TH", {
     hour: "2-digit",
     minute: "2-digit",
   });
 };
 
-export default function Page({ params }: PageProps) {
-  const { date } = use(params);
-  const { backendClient, setFullLoading } = useHelperContext()();
+export default function Page() {
+  const { backendClient, setFullLoading, setAlert } = useHelperContext()();
 
   const [response, setResponse] = useState<GenerateSaleCycleResponse>();
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
@@ -61,7 +55,7 @@ export default function Page({ params }: PageProps) {
 
   const fetchGenerateSaleCycle = async () => {
     setFullLoading(true);
-    const response = await backendClient.generteSaleCycle(date);
+    const response = await backendClient.generteSaleCycle();
     setFullLoading(false);
     if (isErrorResponse(response)) {
       return;
@@ -95,13 +89,20 @@ export default function Page({ params }: PageProps) {
     fetchGenerateSaleCycle();
   }, []);
 
+  const onCloseSaleCycle = async () => {
+    setAlert(
+      "ยืนยันการปิดรอบการขาย",
+      `กรุณายืนยันการปิดรอบการขายจำนวน ${(
+        response?.sale_cycle.total_amount ?? 0
+      ).toLocaleString()} บาท`,
+      () => {},
+      true,
+    );
+  };
+
   return (
     <div className="px-4 py-6">
       <div className="text-4xl mb-3">ปิดยอดการขาย</div>
-      <div className="flex rounded-md w-fit px-3 py-2 gap-2 mb-3 bg-text-primary text-md text-white shadow-md">
-        <IconCalendarWeek color="#ffffff" />
-        ยอดการขายวันที่ {date}
-      </div>
       <div className="flex gap-3">
         <div className="bg-white p-4 rounded-md shadow-md w-full">
           <div className="text-xl flex gap-2">
@@ -125,7 +126,7 @@ export default function Page({ params }: PageProps) {
       <Button
         icon={<img src="/icon-bearhouse-2.png" alt="icon" />}
         text="ยืนยันการปิดรอบการขาย"
-        onClick={() => {}}
+        onClick={onCloseSaleCycle}
         className="mt-3"
       />
       <div className="text-3xl mt-5">รายการทั้งหมด</div>
@@ -228,7 +229,7 @@ export default function Page({ params }: PageProps) {
                                 <div className="text-base">
                                   {index + 1}. {line.product_name}
                                 </div>
-                                <div className=" text-base">
+                                <div className="text-base">
                                   ฿{line.unit_price.toLocaleString()} x{" "}
                                   {line.quantity} = ฿
                                   {line.total_price.toLocaleString()}

@@ -183,6 +183,7 @@ export interface SaleOrder {
     total_amount: number;
     customer_phone: string;
     customer_email: string;
+    sale_cycle_id: string;
     created_at: string;
     updated_at: string;
     deleted_at: string;
