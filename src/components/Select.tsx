@@ -45,7 +45,7 @@ export default function Select({ selections, onChange }: SelectProp) {
   return (
     <>
       <div
-        className="flex gap-3 items-center border-2 px-5 py-1 rounded-full cursor-pointer"
+        className="flex gap-3 items-center justify-between border-2 px-5 py-1 rounded-full cursor-pointer"
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="text-xl">

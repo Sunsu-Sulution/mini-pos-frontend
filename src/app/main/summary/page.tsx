@@ -5,7 +5,7 @@ import Button from "@/components/Button";
 import Select from "@/components/Select";
 import DateSelect from "@/components/DateSelect";
 import Graph from "@/components/Graph";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, ReactNode } from "react";
 import {
   SaleOrder,
   SaleCycle,
@@ -15,8 +15,6 @@ import {
 import Input from "@/components/Input";
 import {
   IconSearch,
-  IconChevronDown,
-  IconChevronUp,
 } from "@tabler/icons-react";
 import { useHelperContext } from "@/components/providers/helper-provider";
 import Link from "next/link";
@@ -56,6 +54,30 @@ const formatDateQuery = (date?: Date) => {
   const month = (date.getMonth() + 1).toString().padStart(2, "0");
   const year = date.getFullYear();
   return `${year}-${month}-${day}`;
+};
+
+type SectionProps = {
+  title: string;
+  subtitle?: string;
+  actions?: ReactNode;
+  children: ReactNode;
+};
+
+const Section = ({ title, subtitle, actions, children }: SectionProps) => {
+  return (
+    <section className="bg-white rounded-xl shadow-md px-5 py-4 space-y-3">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-6">
+        <div>
+          <p className="text-sm  uppercase tracking-wide text-gray-400">
+            {title}
+          </p>
+          {subtitle && <p className="text-xl text-gray-900">{subtitle}</p>}
+        </div>
+        {actions && <div className="w-full md:w-auto">{actions}</div>}
+      </div>
+      <div>{children}</div>
+    </section>
+  );
 };
 
 export default function Page() {
@@ -271,302 +293,315 @@ export default function Page() {
   };
 
   return (
-    <div className="px-4 py-6">
-      <div className="text-4xl mb-6">สรุปยอดขาย</div>
-
-      {/* start summary */}
-      <div className="flex justify-between items-center mb-3">
-        <div className="text-2xl mb-3">สรุปผล</div>
-        <DateSelect
-          range={true}
-          value={
-            startDateSummary && endDateSummary
-              ? { start: startDateSummary, end: endDateSummary }
-              : undefined
-          }
-          onChange={(date) => handleDateSummaryChange(date)}
-          placeholder="เลือกวันที่"
-        />
+    <div className="px-4 py-6 space-y-10">
+      <div className="mb-4">
+        <h1 className="text-4xl">สรุปยอดขาย</h1>
       </div>
-      <div className="h-[300px] max-w-5xl mb-6 bg-white px-5 pr-7 py-6 rounded-md shadow-md">
-        <Graph
-          labels={graphLabels.length > 0 ? graphLabels : ["ไม่มีข้อมูล"]}
-          datas={graphDatas.length > 0 ? graphDatas : [0]}
-          formatPart={(value: number) => [value.toLocaleString("th-TH")]}
-        />
-      </div>
-      <div className="flex justify-between gap-2 mb-6">
-        <div className="bg-white w-[50%] rounded-md pt-3 pb-4 px-3 shadow-md">
-          <div className="text-md">รายการที่ขายได้</div>
-          <div className="text-xl text-green-600">
-            {graphDatas.reduce((sum, n) => sum + n, 0).toLocaleString()} บาท
-          </div>
-        </div>
-        <div className="bg-white w-[50%] rounded-md pt-3 pb-4 px-3 shadow-md">
-          <div className="text-md">เฉลี่ยต่อวัน</div>
-          <div className="text-xl text-rose-600">
-            {(
-              graphDatas.reduce((sum, n) => sum + n, 0) / graphDatas.length
-            ).toLocaleString()}{" "}
-            บาท
-          </div>
-        </div>
-      </div>
-      {/* end summary */}
 
-      {/* start cycle */}
-      <div className="flex justify-between items-center mb-3 mt-12">
-        <div className="text-2xl mb-3">รอบการขาย</div>
-        <DateSelect
-          onChange={handleDateCycleChange}
-          placeholder="เลือกวันที่"
-        />
-      </div>
-      {cycles.length === 0 && (
-        <div className="text-center">ยังไม่มีรอบการขายที่บันทึกไว้</div>
-      )}
-      {cycles.map((cycle) => {
-        return (
-          <div
-            className="bg-white rounded-md p-3 shadow-md mt-3 flex justify-between"
-            key={cycle.ref_code}
-          >
-            <div className="">
-              <div className="text-md text-gray-400">Reference Code</div>
-              <div className="text-xl flex items-center gap-2">
-                <div>{cycle.ref_code}</div>
-              </div>
-            </div>
-            <div className="flex flex-col items-end justify-end">
-              <div className="text-md text-gray-400">{cycle.created_at}</div>
-              <div className="text-xl">
-                ฿{cycle.total_amount.toLocaleString()}
-              </div>
-            </div>
-          </div>
-        );
-      })}
-      <Button
-        className="mb-6 mt-6"
-        text="ปิดรอบการขาย"
-        icon={<img src="/icon-bearhouse-1.png" alt="icon" />}
-        onClick={onCloseSaleCycle}
-      />
-      {/* end cycle */}
-
-      <div className="flex flex-col justify-start items-start gap-2 mb-2 mt-12">
-        <div className="text-2xl">รายการที่ขายได้</div>
-        <div className="flex w-full gap-2">
-          <Input
-            className="w-full flex-1"
-            type="text"
-            placeholder="ค้นหาจากเลขใบเสร็จ"
-            onChange={setQueryOrder}
-            value={queryOrder}
-          />
-          <Button
-            text={<IconSearch />}
-            className="px-2"
-            onClick={handleSearchOrders}
-          />
-        </div>
-
-        <div className="flex gap-2">
-          <Select
-            selections={[
-              {
-                name: "ทั้งหมด",
-                value: "all",
-              },
-              {
-                name: "ฉบับร่าง",
-                value: "draft",
-              },
-              {
-                name: "ส่งแล้ว",
-                value: "submit",
-              },
-              {
-                name: "รอชำระเงิน",
-                value: "waiting_payment",
-              },
-              {
-                name: "ชำระเงินแล้ว",
-                value: "paid",
-              },
-              {
-                name: "ยกเลิก",
-                value: "cancelled",
-              },
-              {
-                name: "คืนเงิน",
-                value: "refunded",
-              },
-            ]}
-            onChange={(value) =>
-              handleStatusChange(
-                value.value as
-                  | "all"
-                  | "draft"
-                  | "submit"
-                  | "waiting_payment"
-                  | "paid"
-                  | "cancelled"
-                  | "refunded",
-              )
-            }
-          />
+      {/* Sales Section */}
+      <Section
+        title="ยอดการขาย"
+        subtitle="ตรวจสอบรอบการขายและยอดในแต่ละรอบ"
+        actions={
           <DateSelect
-            value={dateOrder}
-            onChange={handleDateChange}
+            onChange={handleDateCycleChange}
             placeholder="เลือกวันที่"
           />
-        </div>
-      </div>
-      <div className="mt-3 flex flex-col gap-3">
-        {saleOrders.length === 0 ? (
-          <div className="text-center text-gray-500">
-            ยังไม่มีรายการขายในช่วงเวลานี้
-          </div>
-        ) : (
-          saleOrders.map((order) => {
-            const isExpanded = expandedOrders.has(order.id);
-            const details = orderDetails[order.id];
-
-            return (
-              <div
-                key={order.id}
-                className="bg-white rounded-md p-3 shadow-md transition-all duration-300 hover:shadow-lg"
-              >
-                <div
-                  className="flex justify-between cursor-pointer"
-                  onClick={() => toggleOrderExpansion(order.id)}
-                >
-                  <div>
-                    <div className="text-md text-gray-400">
-                      {order.payment_type.split("_").join(" ")}
-                    </div>
-                    <div className="text-xl flex items-center gap-2">
-                      <div className="">{order.number}</div>
-                      {order.status !== "draft" && (
-                        <div
-                          className={`px-3 h-5 rounded-md text-sm flex items-center ${
-                            statusDisplay[order.status].className
-                          }`}
-                        >
-                          {statusDisplay[order.status].label}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex flex-col items-end justify-end">
-                      <div className="text-md text-gray-400">
-                        {formatTime(order.created_at)}
-                      </div>
-                      <div className="text-xl">
-                        ฿
-                        {order.total_amount.toLocaleString("th-TH", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </div>
-                    </div>
-                    {isExpanded ? (
-                      <IconChevronUp className="text-gray-400 transition-transform duration-300 rotate-180" />
-                    ) : (
-                      <IconChevronDown className="text-gray-400 transition-transform duration-300" />
-                    )}
-                  </div>
-                </div>
-                {isExpanded && details && (
-                  <div className="mt-4 pt-4 border-t border-gray-200 overflow-hidden">
-                    <div className="space-y-3 text-base">
-                      {details.sale_order.customer_phone && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">เบอร์สมาชิก:</span>
-                          <span className="">
-                            {details.sale_order.customer_phone}
-                          </span>
-                        </div>
-                      )}
-                      {details.sale_order.customer_email && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">อีเมล:</span>
-                          <span className="">
-                            {details.sale_order.customer_email}
-                          </span>
-                        </div>
-                      )}
-                      {details.sale_order.transaction_ref && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">
-                            Transaction Ref:
-                          </span>
-                          <span className="">
-                            {details.sale_order.transaction_ref}
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">วันที่สร้าง:</span>
-                        <span className="">
-                          {new Date(
-                            details.sale_order.created_at,
-                          ).toLocaleString("th-TH")}
-                        </span>
-                      </div>
-                      {details.sale_order_line &&
-                        details.sale_order_line.length > 0 && (
-                          <div className="mt-4">
-                            <div className="text-gray-500 mb-3  text-lg">
-                              รายการสินค้า:
-                            </div>
-                            <div className="space-y-2">
-                              {details.sale_order_line.map((line, index) => (
-                                <div
-                                  key={line.id}
-                                  className="flex justify-between bg-gray-50 p-3 rounded-lg"
-                                >
-                                  <div className="text-base">
-                                    {index + 1}. {line.product_name}
-                                  </div>
-                                  <div className=" text-base">
-                                    ฿{line.unit_price.toLocaleString()} x{" "}
-                                    {line.quantity} = ฿
-                                    {line.total_price.toLocaleString()}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                    </div>
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                      <Link
-                        href={`/public/order/${order.id}`}
-                        target="_blank"
-                        className="text-blue-600 hover:text-blue-800"
-                      >
-                        ดูใบเสร็จรับเงิน →
-                      </Link>
-                    </div>
-                  </div>
-                )}
+        }
+      >
+        <div className="space-y-4">
+          {cycles.length === 0 && (
+            <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 py-8 text-center text-gray-500">
+              ยังไม่มีรอบการขายที่บันทึกไว้
+            </div>
+          )}
+          {cycles.map((cycle) => (
+            <div
+              key={cycle.ref_code}
+              className="flex items-center justify-between rounded-lg border border-gray-100 bg-slate-50 px-5 py-4"
+            >
+              <div>
+                <p className="text-sm uppercase tracking-wide text-gray-400">
+                  Reference Code
+                </p>
+                <p className="text-2xl  text-gray-900">{cycle.ref_code}</p>
               </div>
-            );
-          })
-        )}
-      </div>
-      {nextCursor && saleOrders.length > 0 && (
-        <div className="flex justify-center mt-6">
+              <div className="text-right">
+                <p className="text-sm text-gray-500">{cycle.created_at}</p>
+                <p className="text-2xl  text-gray-900">
+                  ฿{cycle.total_amount.toLocaleString()}
+                </p>
+              </div>
+            </div>
+          ))}
           <Button
-            text={isLoadingMore ? "กำลังโหลด..." : "โหลดเพิ่มเติม"}
-            className="w-fit px-6"
-            onClick={handleLoadMore}
+            className="w-full justify-center"
+            text="ปิดรอบการขาย"
+            icon={<img src="/icon-bearhouse-1.png" alt="icon" />}
+            onClick={onCloseSaleCycle}
           />
         </div>
-      )}
+      </Section>
+
+      {/* Summary Section */}
+      <Section
+        title="สรุปผล"
+        subtitle="ดูภาพรวมยอดขายตามช่วงวันที่ที่เลือก"
+        actions={
+          <DateSelect
+            range={true}
+            value={
+              startDateSummary && endDateSummary
+                ? { start: startDateSummary, end: endDateSummary }
+                : undefined
+            }
+            onChange={(date) => handleDateSummaryChange(date)}
+            placeholder="เลือกวันที่"
+          />
+        }
+      >
+        <div className="flex gap-6 flex-col">
+          <div className="flex gap-4">
+            <div className="rounded-lg border border-gray-100 bg-white px-4 py-5 text-center w-full">
+              <p className="text-sm text-gray-500">ยอดขายรวม</p>
+              <p className="text-3xl  text-green-600">
+                {graphDatas.reduce((sum, n) => sum + n, 0).toLocaleString()} บาท
+              </p>
+            </div>
+            <div className="rounded-lg border border-gray-100 bg-white px-4 py-5 text-center w-full">
+              <p className="text-sm text-gray-500">เฉลี่ยต่อวัน</p>
+              <p className="text-3xl  text-rose-600">
+                {graphDatas.length
+                  ? (
+                      graphDatas.reduce((sum, n) => sum + n, 0) /
+                      graphDatas.length
+                    ).toLocaleString()
+                  : 0}{" "}
+                บาท
+              </p>
+            </div>
+          </div>
+          <div className="min-h-[360px] flex-1 rounded-lg border border-gray-100 bg-gradient-to-br from-white to-slate-50 px-4 py-3">
+            <Graph
+              labels={graphLabels.length > 0 ? graphLabels : ["ไม่มีข้อมูล"]}
+              datas={graphDatas.length > 0 ? graphDatas : [0]}
+              formatPart={(value: number) => [value.toLocaleString("th-TH")]}
+            />
+          </div>
+        </div>
+      </Section>
+
+      {/* Orders Section */}
+      <Section
+        title="รายการที่ขายได้"
+        subtitle="ค้นหาและจัดการใบเสร็จทั้งหมด"
+        actions={
+          <div className="flex flex-col gap-3 md:flex-row">
+            <Select
+              selections={[
+                {
+                  name: "ทั้งหมด",
+                  value: "all",
+                },
+                {
+                  name: "ฉบับร่าง",
+                  value: "draft",
+                },
+                {
+                  name: "ส่งแล้ว",
+                  value: "submit",
+                },
+                {
+                  name: "รอชำระเงิน",
+                  value: "waiting_payment",
+                },
+                {
+                  name: "ชำระเงินแล้ว",
+                  value: "paid",
+                },
+                {
+                  name: "ยกเลิก",
+                  value: "cancelled",
+                },
+                {
+                  name: "คืนเงิน",
+                  value: "refunded",
+                },
+              ]}
+              onChange={(value) =>
+                handleStatusChange(
+                  value.value as
+                    | "all"
+                    | "draft"
+                    | "submit"
+                    | "waiting_payment"
+                    | "paid"
+                    | "cancelled"
+                    | "refunded",
+                )
+              }
+            />
+            <DateSelect
+              value={dateOrder}
+              onChange={handleDateChange}
+              placeholder="เลือกวันที่"
+            />
+          </div>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          <div className="flex w-full flex-col gap-3 md:flex-row">
+            <Input
+              className="flex-1"
+              type="text"
+              placeholder="ค้นหาจากเลขใบเสร็จ"
+              onChange={setQueryOrder}
+              value={queryOrder}
+            />
+            <Button
+              text={<IconSearch />}
+              className="px-6"
+              onClick={handleSearchOrders}
+            />
+          </div>
+
+          <div className="mt-3 flex flex-col gap-3">
+            {saleOrders.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 py-10 text-center text-gray-500">
+                ยังไม่มีรายการขายในช่วงเวลานี้
+              </div>
+            ) : (
+              saleOrders.map((order) => {
+                const isExpanded = expandedOrders.has(order.id);
+                const details = orderDetails[order.id];
+
+                return (
+                  <div
+                    key={order.id}
+                    className="rounded-lg border border-gray-100 bg-white p-4 shadow-sm transition-all duration-300"
+                  >
+                    <div
+                      className="flex cursor-pointer items-center justify-between"
+                      onClick={() => toggleOrderExpansion(order.id)}
+                    >
+                      <div>
+                        <p className="text-sm uppercase tracking-wide text-gray-400">
+                          {order.payment_type.split("_").join(" ")}
+                        </p>
+                        <div className="flex items-center gap-2 text-xl ">
+                          <span>{order.number}</span>
+                          {order.status !== "draft" && (
+                            <span
+                              className={`px-3 h-5 rounded-md text-sm flex items-center ${
+                                statusDisplay[order.status].className
+                              }`}
+                            >
+                              {statusDisplay[order.status].label}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p className="text-sm text-gray-500">
+                            {formatTime(order.created_at)}
+                          </p>
+                          <p className="text-2xl  text-gray-900">
+                            ฿
+                            {order.total_amount.toLocaleString("th-TH", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    {isExpanded && details && (
+                      <div className="mt-4 pt-4 text-base">
+                        <div className="space-y-3">
+                          {details.sale_order.customer_phone && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">
+                                เบอร์สมาชิก:
+                              </span>
+                              <span>{details.sale_order.customer_phone}</span>
+                            </div>
+                          )}
+                          {details.sale_order.customer_email && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">อีเมล:</span>
+                              <span>{details.sale_order.customer_email}</span>
+                            </div>
+                          )}
+                          {details.sale_order.transaction_ref && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">
+                                Transaction Ref:
+                              </span>
+                              <span>{details.sale_order.transaction_ref}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">วันที่สร้าง:</span>
+                            <span>
+                              {new Date(
+                                details.sale_order.created_at,
+                              ).toLocaleString("th-TH")}
+                            </span>
+                          </div>
+                        </div>
+                        {details.sale_order_line &&
+                          details.sale_order_line.length > 0 && (
+                            <div className="mt-5 rounded-lg border border-gray-100 bg-gray-100 px-4 py-4">
+                              <p className="mb-3 text-lg font-medium text-gray-700">
+                                รายการสินค้า
+                              </p>
+                              <div className="space-y-2">
+                                {details.sale_order_line.map((line, index) => (
+                                  <div
+                                    key={line.id}
+                                    className="flex flex-wrap justify-between gap-2 rounded-md bg-white px-3 py-2 text-base"
+                                  >
+                                    <span>
+                                      {index + 1}. {line.product_name}
+                                    </span>
+                                    <span>
+                                      ฿{line.unit_price.toLocaleString()} x{" "}
+                                      {line.quantity} = ฿
+                                      {line.total_price.toLocaleString()}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        <div className="mt-4 border-t border-gray-200 pt-4">
+                          <Link
+                            href={`/public/order/${order.id}`}
+                            target="_blank"
+                            className="text-blue-600"
+                          >
+                            ดูใบเสร็จรับเงิน →
+                          </Link>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+          {nextCursor && saleOrders.length > 0 && (
+            <div className="flex justify-center pt-2">
+              <Button
+                text={isLoadingMore ? "กำลังโหลด..." : "โหลดเพิ่มเติม"}
+                className="w-fit px-6"
+                onClick={handleLoadMore}
+              />
+            </div>
+          )}
+        </div>
+      </Section>
     </div>
   );
 }

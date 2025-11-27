@@ -12,8 +12,6 @@ import {
   IconAlertSmall,
   IconCalendarWeek,
   IconCashBanknote,
-  IconChevronDown,
-  IconChevronUp,
   IconShoppingCart,
 } from "@tabler/icons-react";
 import React, { use, useEffect, useState } from "react";
@@ -142,7 +140,7 @@ export default function Page({ params }: PageProps) {
           return (
             <div
               key={saleOrder.id}
-              className="bg-white p-4 rounded-md shadow-md w-full transition-all duration-300 hover:shadow-lg"
+              className="bg-white p-4 rounded-md shadow-md w-full transition-all duration-300"
             >
               <div
                 className="flex justify-between cursor-pointer"
@@ -178,11 +176,6 @@ export default function Page({ params }: PageProps) {
                       })}
                     </div>
                   </div>
-                  {isExpanded ? (
-                    <IconChevronUp className="text-gray-400 transition-transform duration-300 rotate-180" />
-                  ) : (
-                    <IconChevronDown className="text-gray-400 transition-transform duration-300" />
-                  )}
                 </div>
               </div>
               {isExpanded && details && (
@@ -223,8 +216,8 @@ export default function Page({ params }: PageProps) {
                     {details.sale_order_line &&
                       details.sale_order_line.length > 0 && (
                         <div className="mt-4">
-                          <div className="text-gray-500 mb-3  text-lg">
-                            รายการสินค้า:
+                          <div className="text-gray-700 mb-3 text-lg">
+                            รายการสินค้า
                           </div>
                           <div className="space-y-2">
                             {details.sale_order_line.map((line, index) => (
