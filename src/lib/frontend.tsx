@@ -23,8 +23,6 @@ export const renderStatusBadge = (status?: string) => {
   const label = textByStatus[status ?? ""] ?? status ?? "-";
 
   return (
-    <span className={`px-3 rounded-full text-md font-medium ${className}`}>
-      {label}
-    </span>
+    <span className={`px-3 rounded-full text-md ${className}`}>{label}</span>
   );
 };

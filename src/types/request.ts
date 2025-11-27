@@ -236,9 +236,25 @@ export interface OmiseErrorResponse {
     code?: string;
 }
 
-export interface SellCycle {
-    refCode: string;
+export interface SummarySale {
     date: string;
-    time: string;
-    amount: number;
+    amount_sale: number;
+}
+
+export interface SummarySaleResponse {
+    result: SummarySale[];
+}
+
+export interface GenerateSaleCycleResponse {
+    sale_cycle: SaleCycle;
+    sale_orders: SaleOrder[];
+}
+
+export interface SaleCycle {
+    id: string;
+    ref_code: string;
+    total_amount: number;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string;
 }

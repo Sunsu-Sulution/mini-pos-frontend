@@ -395,7 +395,7 @@ export default function Page({ params }: PageProps) {
                           </div>
                         </div>
                       </div>
-                      <div className="text-xl font-semibold">
+                      <div className="text-xl ">
                         {inv.quantity.toLocaleString()}
                       </div>
                     </div>

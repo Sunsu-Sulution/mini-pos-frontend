@@ -19,6 +19,10 @@ export default function Graph({ formatPart, labels, datas }: GraphProp) {
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
 
+    if (chartRef.current) {
+      chartRef.current.destroy();
+    }
+
     const fontFamily = "'DBHeaventRounded', 'Prompt', sans-serif";
     const baseFont = {
       family: fontFamily,
@@ -45,6 +49,9 @@ export default function Graph({ formatPart, labels, datas }: GraphProp) {
             const numericValue =
               typeof rawValue === "number" ? rawValue : Number(rawValue ?? 0);
             const [amount] = formatPart(numericValue);
+            if (Number(amount) == 0) {
+              return;
+            }
             ctx.fillText(amount, bar.x, bar.y - 6);
           });
         });
@@ -131,7 +138,7 @@ export default function Graph({ formatPart, labels, datas }: GraphProp) {
     return () => {
       chartRef.current?.destroy();
     };
-  }, []);
+  }, [labels, datas, formatPart]);
 
   return <canvas ref={canvasRef} />;
 }

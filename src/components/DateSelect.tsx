@@ -3,15 +3,17 @@ import { IconCalendar } from "@tabler/icons-react";
 import React, { useState, useEffect } from "react";
 
 interface DateSelectProp {
-  value?: Date;
-  onChange?: (date: Date) => void;
+  value?: Date | { start: Date; end: Date };
+  onChange?: (date: Date | { start: Date; end: Date }) => void;
   placeholder?: string;
+  range?: boolean; // Enable range selection mode
 }
 
 export default function DateSelect({
   value,
   onChange,
-  placeholder = "เลือกวันที่", // eslint-disable-line @typescript-eslint/no-unused-vars
+  placeholder = "เลือกวันที่",
+  range = false,
 }: DateSelectProp) {
   const getToday = () => {
     const today = new Date();
@@ -19,11 +21,31 @@ export default function DateSelect({
     return today;
   };
 
-  const [selectedDate, setSelectedDate] = useState<Date>(value || getToday());
-  const [isOpen, setIsOpen] = useState(false);
-  const [currentMonth, setCurrentMonth] = useState(
-    value ? new Date(value) : getToday(),
+  const isRangeValue = (
+    val?: Date | { start: Date; end: Date },
+  ): val is { start: Date; end: Date } => {
+    return val !== undefined && typeof val === "object" && "start" in val;
+  };
+
+  const [selectedDate, setSelectedDate] = useState<Date>(
+    !range && !isRangeValue(value) ? value || getToday() : getToday(),
   );
+  const [startDate, setStartDate] = useState<Date | null>(
+    range && isRangeValue(value) ? value.start : null,
+  );
+  const [endDate, setEndDate] = useState<Date | null>(
+    range && isRangeValue(value) ? value.end : null,
+  );
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    if (range && isRangeValue(value)) {
+      return new Date(value.start);
+    }
+    if (!range && value instanceof Date) {
+      return new Date(value);
+    }
+    return getToday();
+  });
 
   useEffect(() => {
     if (isOpen) {
@@ -38,14 +60,22 @@ export default function DateSelect({
   }, [isOpen]);
 
   useEffect(() => {
-    if (value) {
-      setSelectedDate(value);
-      setCurrentMonth(new Date(value));
+    if (range) {
+      if (isRangeValue(value)) {
+        setStartDate(value.start);
+        setEndDate(value.end);
+        setCurrentMonth(new Date(value.start));
+      }
+    } else {
+      if (value instanceof Date) {
+        setSelectedDate(value);
+        setCurrentMonth(new Date(value));
+      }
     }
-  }, [value]);
+  }, [value, range]);
 
   useEffect(() => {
-    if (!value && onChange) {
+    if (!value && onChange && !range) {
       onChange(selectedDate);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -56,6 +86,19 @@ export default function DateSelect({
     const month = (date.getMonth() + 1).toString().padStart(2, "0");
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
+  };
+
+  const getDisplayText = (): string => {
+    if (range) {
+      if (startDate && endDate) {
+        return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+      } else if (startDate) {
+        return `${formatDate(startDate)} - ...`;
+      }
+      return placeholder;
+    } else {
+      return formatDate(selectedDate);
+    }
   };
 
   const getDaysInMonth = (date: Date): number => {
@@ -74,16 +117,47 @@ export default function DateSelect({
     );
   };
 
+  const isDateBetween = (date: Date): boolean => {
+    if (!range || !startDate || !endDate) return false;
+    return date > startDate && date < endDate;
+  };
+
   const handleDateSelect = (day: number) => {
     const newDate = new Date(
       currentMonth.getFullYear(),
       currentMonth.getMonth(),
       day,
     );
-    setSelectedDate(newDate);
-    setIsOpen(false);
-    if (onChange) {
-      onChange(newDate);
+
+    if (range) {
+      if (!startDate || (startDate && endDate)) {
+        // Start new selection
+        setStartDate(newDate);
+        setEndDate(null);
+      } else if (startDate && !endDate) {
+        // Complete the range
+        if (newDate < startDate) {
+          // If selected date is before start, swap them
+          setEndDate(startDate);
+          setStartDate(newDate);
+        } else {
+          setEndDate(newDate);
+        }
+        setIsOpen(false);
+        if (onChange) {
+          onChange({
+            start: newDate < startDate ? newDate : startDate,
+            end: newDate < startDate ? startDate : newDate,
+          });
+        }
+        return;
+      }
+    } else {
+      setSelectedDate(newDate);
+      setIsOpen(false);
+      if (onChange) {
+        onChange(newDate);
+      }
     }
   };
 
@@ -136,7 +210,7 @@ export default function DateSelect({
         className="flex gap-3 items-center border-2 px-5 py-1 rounded-full cursor-pointer"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <div className="text-xl">{formatDate(selectedDate)}</div>
+        <div className="text-xl">{getDisplayText()}</div>
         <IconCalendar size={18} />
       </div>
 
@@ -165,7 +239,7 @@ export default function DateSelect({
                 >
                   ‹
                 </button>
-                <div className="text-xl font-medium">
+                <div className="text-xl">
                   {monthNames[currentMonth.getMonth()]}{" "}
                   {currentMonth.getFullYear()}
                 </div>
@@ -201,17 +275,32 @@ export default function DateSelect({
                     currentMonth.getMonth(),
                     day,
                   );
-                  const isSelected =
-                    selectedDate && isSameDay(date, selectedDate);
+
+                  let isSelected = false;
+                  let isBetween = false;
+
+                  if (range) {
+                    const isStart = startDate
+                      ? isSameDay(date, startDate)
+                      : false;
+                    const isEnd = endDate ? isSameDay(date, endDate) : false;
+                    isBetween = isDateBetween(date);
+                    isSelected = isStart || isEnd;
+                  } else {
+                    isSelected = selectedDate && isSameDay(date, selectedDate);
+                  }
+
                   const isToday = isSameDay(date, new Date());
 
                   return (
                     <button
                       key={index}
                       onClick={() => handleDateSelect(day)}
-                      className={`aspect-square rounded-full text-xl transition-colors ${
+                      className={`aspect-square rounded-full text-xl transition-colors relative ${
                         isSelected
                           ? "bg-gray-800 text-white"
+                          : range && isBetween
+                          ? "bg-gray-100"
                           : isToday
                           ? "bg-gray-200 hover:bg-gray-300"
                           : "hover:bg-gray-100"

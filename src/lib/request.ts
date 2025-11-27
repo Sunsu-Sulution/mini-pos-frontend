@@ -1,4 +1,4 @@
-import { CreateDraftSaleOrderRequest, EditDraftSaleOrderLineRequest, EditDraftSaleOrderLineResponse, OmiseChargeResponse, SaleOrder, SaleOrderWithOrderLine, UpdateUserRequest } from './../types/request';
+import { CreateDraftSaleOrderRequest, EditDraftSaleOrderLineRequest, EditDraftSaleOrderLineResponse, GenerateSaleCycleResponse, OmiseChargeResponse, SaleOrder, SaleOrderWithOrderLine, SummarySaleResponse, UpdateUserRequest } from './../types/request';
 import axios, { AxiosInstance } from "axios";
 import { getItem, removeItem, setItem } from "./storage";
 import { AddProductRequest, AddStoreRequest, ErrorResponse, initUser, Inventory, InventoryMovement, InventoryRequest, LoginRequest, LoginResponse, MoveProductRequest, MoveProductResponse, Pagination, Product, RegisterRequest, RegisterResponse, Store, UploadFileResponse, User } from "@/types/request";
@@ -456,6 +456,33 @@ export class BackendClient {
                     query,
                     date,
                     status
+                }
+            });
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
+    async summarySale(startDate: string, endDate: string): Promise<SummarySaleResponse | ErrorResponse> {
+        try {
+            const response = await this.client.get("/summary/sale", {
+                params: {
+                    startDate,
+                    endDate
+                }
+            });
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
+    async generteSaleCycle(date: string): Promise<GenerateSaleCycleResponse | ErrorResponse> {
+        try {
+            const response = await this.client.get("/sale-cycle/generate", {
+                params: {
+                    date
                 }
             });
             return response.data;
