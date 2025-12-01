@@ -80,7 +80,7 @@ const Section = ({ title, subtitle, actions, children }: SectionProps) => {
 
 export default function Page() {
   const { backendClient, setFullLoading } = useHelperContext()();
-  const [cycles] = useState<SaleCycle[]>([]);
+  const [cycles, setCycles] = useState<SaleCycle[]>([]);
 
   const [dateCycle, setDateCycle] = useState<Date>();
   const [dateOrder, setDateOrder] = useState<Date>();
@@ -209,9 +209,34 @@ export default function Page() {
     void fetchSaleOrders({ append: false, cursor: "", date: selectedDate });
   };
 
+  const fetchSaleCycles = useCallback(
+    async (date?: Date) => {
+      const resolvedDate = date ?? dateCycle;
+      if (!resolvedDate) {
+        setCycles([]);
+        return;
+      }
+
+      setFullLoading(true);
+      const response = await backendClient.listSaleCycle(
+        formatDateQuery(resolvedDate),
+      );
+      setFullLoading(false);
+
+      if (isErrorResponse(response)) {
+        setCycles([]);
+        return;
+      }
+
+      setCycles(response.sale_cycle ?? []);
+    },
+    [backendClient, dateCycle, setFullLoading],
+  );
+
   const handleDateCycleChange = (date: Date | { start: Date; end: Date }) => {
     const selectedDate = date instanceof Date ? date : date.start;
     setDateCycle(selectedDate);
+    void fetchSaleCycles(selectedDate);
   };
 
   const fetchSummary = useCallback(async () => {
@@ -314,23 +339,28 @@ export default function Page() {
             </div>
           )}
           {cycles.map((cycle) => (
-            <div
-              key={cycle.ref_code}
+            <Link
+              key={cycle.id || cycle.ref_code}
+              href={`/main/sale-cycle/${cycle.id}`}
               className="flex items-center justify-between rounded-lg border border-gray-100 bg-slate-50 px-5 py-4"
             >
               <div>
                 <p className="text-sm uppercase tracking-wide text-gray-400">
                   Reference Code
                 </p>
-                <p className="text-2xl  text-gray-900">{cycle.ref_code}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-500">{cycle.created_at}</p>
                 <p className="text-2xl  text-gray-900">
-                  ฿{cycle.total_amount.toLocaleString()}
+                  {cycle.ref_code || "-"}
                 </p>
               </div>
-            </div>
+              <div className="text-right">
+                <p className="text-sm text-gray-500">
+                  {cycle.created_at ? formatTime(cycle.created_at) : "-"}
+                </p>
+                <p className="text-2xl  text-gray-900">
+                  ฿{(cycle.total_amount ?? 0).toLocaleString()}
+                </p>
+              </div>
+            </Link>
           ))}
           <Button
             className="w-full justify-center"

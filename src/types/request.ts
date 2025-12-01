@@ -251,6 +251,15 @@ export interface GenerateSaleCycleResponse {
     sale_orders: SaleOrder[];
 }
 
+export interface ListSaleCycleResponse {
+    sale_cycle: SaleCycle[];
+}
+
+export interface GetSaleCycleResponse {
+    sale_cycle: SaleCycle;
+    sale_orders: SaleOrder[];
+}
+
 export interface SaleCycle {
     id: string;
     ref_code: string;

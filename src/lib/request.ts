@@ -1,4 +1,4 @@
-import { CreateDraftSaleOrderRequest, EditDraftSaleOrderLineRequest, EditDraftSaleOrderLineResponse, GenerateSaleCycleResponse, OmiseChargeResponse, SaleOrder, SaleOrderWithOrderLine, SummarySaleResponse, UpdateUserRequest } from './../types/request';
+import { CreateDraftSaleOrderRequest, EditDraftSaleOrderLineRequest, EditDraftSaleOrderLineResponse, GenerateSaleCycleResponse, GetSaleCycleResponse, ListSaleCycleResponse, OmiseChargeResponse, SaleOrder, SaleOrderWithOrderLine, SummarySaleResponse, UpdateUserRequest } from './../types/request';
 import axios, { AxiosInstance } from "axios";
 import { getItem, removeItem, setItem } from "./storage";
 import { AddProductRequest, AddStoreRequest, ErrorResponse, initUser, Inventory, InventoryMovement, InventoryRequest, LoginRequest, LoginResponse, MoveProductRequest, MoveProductResponse, Pagination, Product, RegisterRequest, RegisterResponse, Store, UploadFileResponse, User } from "@/types/request";
@@ -492,6 +492,24 @@ export class BackendClient {
             const response = await this.client.post("/sale-cycle/close", {
                 "confirm_price": confirmPrice
             });
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
+    async listSaleCycle(date: string): Promise<ListSaleCycleResponse | ErrorResponse> {
+        try {
+            const response = await this.client.get(`/sale-cycles?date=${date}`);
+            return response.data;
+        } catch (e) {
+            return handlerError(e, this.setAlert);
+        }
+    }
+
+    async getSaleCycleById(id: string): Promise<GetSaleCycleResponse | ErrorResponse> {
+        try {
+            const response = await this.client.get(`/sale-cycle/${id}`);
             return response.data;
         } catch (e) {
             return handlerError(e, this.setAlert);

@@ -1,19 +1,25 @@
-/* eslint-disable @next/next/no-img-element */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client";
-import Button from "@/components/Button";
 import { useHelperContext } from "@/components/providers/helper-provider";
 import {
-  GenerateSaleCycleResponse,
   isErrorResponse,
+  SaleCycle,
+  SaleOrder,
   SaleOrderWithOrderLine,
 } from "@/types/request";
+import React, { use, useEffect, useState } from "react";
+import QRCodeSVG from "react-qr-code";
+import Barcode from "react-barcode";
 import {
-  IconAlertSmall,
-  IconCashBanknote,
   IconShoppingCart,
+  IconCashBanknote,
+  IconCopy,
 } from "@tabler/icons-react";
-import React, { useEffect, useState } from "react";
+
+type PageProps = {
+  params: Promise<{ id: string }>;
+};
 
 type StatusOrder =
   | "draft"
@@ -44,23 +50,29 @@ const formatTime = (value: string) => {
   });
 };
 
-export default function Page() {
-  const { backendClient, setFullLoading, setAlert } = useHelperContext()();
-
-  const [response, setResponse] = useState<GenerateSaleCycleResponse>();
+export default function Page({ params }: PageProps) {
+  const { id } = use(params);
+  const { backendClient, setFullLoading } = useHelperContext()();
+  const [saleCycle, setSaleCycle] = useState<SaleCycle>();
+  const [saleOrder, setSaleOrder] = useState<SaleOrder[]>();
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
   const [orderDetails, setOrderDetails] = useState<
     Record<string, SaleOrderWithOrderLine>
   >({});
+  const [codeType, setCodeType] = useState<"qrcode" | "barcode">("qrcode");
+  const [tooltipText, setTooltipText] = useState<string>("คัดลอก");
+  const [showTooltip, setShowTooltip] = useState<boolean>(false);
+  const [isTooltipExiting, setIsTooltipExiting] = useState<boolean>(false);
 
-  const fetchGenerateSaleCycle = async () => {
+  const fetchSaleCycle = async () => {
     setFullLoading(true);
-    const response = await backendClient.generteSaleCycle();
+    const response = await backendClient.getSaleCycleById(id);
     setFullLoading(false);
     if (isErrorResponse(response)) {
       return;
     }
-    setResponse(response);
+    setSaleCycle(response.sale_cycle);
+    setSaleOrder(response.sale_orders);
   };
 
   const toggleOrderExpansion = async (orderId: string) => {
@@ -86,106 +98,176 @@ export default function Page() {
   };
 
   useEffect(() => {
-    fetchGenerateSaleCycle();
+    fetchSaleCycle();
   }, []);
 
-  const onCloseSaleCycle = async () => {
-    setAlert(
-      "ยืนยันการปิดรอบการขาย",
-      `กรุณายืนยันการปิดรอบการขายจำนวน ${(
-        response?.sale_cycle.total_amount ?? 0
-      ).toLocaleString()} บาท`,
-      async () => {
-        setFullLoading(true);
-        const saleCycle = await backendClient.closeSaleCycle(
-          response?.sale_cycle.total_amount ?? 0,
-        );
-        setFullLoading(false);
-        if (isErrorResponse(saleCycle)) {
-          return;
-        }
-        setAlert(
-          "สำเร็จ",
-          "ปิดยอดการขายสำเร็จแล้ว",
-          () => {
-            window.location.href = `/main/sale-cycle/${saleCycle.sale_cycle.id}`;
-          },
-          false,
-        );
-      },
-      true,
-    );
-  };
+  if (!saleCycle) {
+    return <div className="px-4 py-6"></div>;
+  }
 
   return (
     <div className="px-4 py-6">
-      <div className="text-4xl mb-3">ปิดยอดการขาย</div>
-      <div className="flex gap-3">
-        <div className="bg-white p-4 rounded-md shadow-md w-full">
-          <div className="text-xl flex gap-2">
-            <IconShoppingCart />
-            จำนวน
+      {/* Sale Cycle Info */}
+      <div className="bg-white p-5 rounded-2xl shadow-md mb-5">
+        <div className="text-3xl mb-4">ข้อมูลรอบการขาย</div>
+        <div className="flex gap-3 mb-4">
+          <div className="bg-white p-4 rounded-md shadow-md w-full">
+            <div className="text-xl flex gap-2">
+              <IconShoppingCart />
+              จำนวน
+            </div>
+            <div className="text-3xl text-green-500">
+              {saleOrder?.length ?? 0} รายการ
+            </div>
           </div>
-          <div className="text-3xl text-green-500">
-            {response?.sale_orders.length ?? 0} รายการ
+          <div className="bg-white p-4 rounded-md shadow-md w-full">
+            <div className="text-xl flex gap-2">
+              <IconCashBanknote />
+              ยอดรวม
+            </div>
+            <div className="text-3xl text-green-500">
+              {(saleCycle.total_amount ?? 0).toLocaleString()} บาท
+            </div>
           </div>
         </div>
-        <div className="bg-white p-4 rounded-md shadow-md w-full">
-          <div className="text-xl flex gap-2">
-            <IconCashBanknote />
-            ยอดรวม
+        <div className="mb-4">
+          <div className="text-xl text-gray-500">เวลาที่ปิดยอดการขาย</div>
+          <div className="text-xl">
+            {new Date(saleCycle.created_at).toLocaleString("th-TH")}
           </div>
-          <div className="text-3xl text-green-500">
-            {(response?.sale_cycle.total_amount ?? 0).toLocaleString()} บาท
+        </div>
+
+        {/* QR Code / Barcode */}
+        {saleCycle.ref_code && (
+          <div className="mt-10 flex flex-col items-center text-xl">
+            {/* Code Type Selector */}
+            <div className="mb-4 flex gap-2 bg-gray-100 p-1 rounded-lg">
+              <button
+                onClick={() => setCodeType("qrcode")}
+                className={`px-4 py-2 rounded-md transition-colors ${
+                  codeType === "qrcode"
+                    ? "bg-text-primary text-white"
+                    : "bg-transparent text-gray-700"
+                }`}
+              >
+                คิวอาร์โค้ด
+              </button>
+              <button
+                onClick={() => setCodeType("barcode")}
+                className={`px-4 py-2 rounded-md transition-colors ${
+                  codeType === "barcode"
+                    ? "bg-text-primary text-white"
+                    : "bg-transparent text-gray-700"
+                }`}
+              >
+                บาร์โค้ด
+              </button>
+            </div>
+
+            <div className="bg-white p-4 rounded-lg my-5">
+              {codeType === "qrcode" ? (
+                <QRCodeSVG value={saleCycle.ref_code} size={300} />
+              ) : (
+                <div className="flex justify-center">
+                  <Barcode
+                    value={saleCycle.ref_code}
+                    format="CODE128"
+                    width={3}
+                    height={200}
+                    displayValue={false}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="w-full bg-gray-100 p-3 rounded-2xl mt-5 text-2xl flex items-center justify-between gap-3">
+          <span className="flex-1 font-bold pl-5">{saleCycle.ref_code}</span>
+          <div className="relative">
+            <button
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(saleCycle.ref_code);
+                  setTooltipText("คัดลอกแล้ว");
+                  setIsTooltipExiting(false);
+                  setShowTooltip(true);
+                  setTimeout(() => {
+                    setIsTooltipExiting(true);
+                    setTimeout(() => {
+                      setShowTooltip(false);
+                      setIsTooltipExiting(false);
+                      setTooltipText("คัดลอก");
+                    }, 300);
+                  }, 500);
+                } catch {
+                  setTooltipText("ไม่สามารถคัดลอกได้");
+                  setIsTooltipExiting(false);
+                  setShowTooltip(true);
+                  setTimeout(() => {
+                    setIsTooltipExiting(true);
+                    setTimeout(() => {
+                      setShowTooltip(false);
+                      setIsTooltipExiting(false);
+                      setTooltipText("คัดลอก");
+                    }, 300);
+                  }, 500);
+                }
+              }}
+              className="p-2 rounded-lg transition-colors flex items-center justify-center relative"
+            >
+              <IconCopy size={20} className="text-gray-700" />
+              {showTooltip && (
+                <div
+                  className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-800 text-white text-sm rounded-lg whitespace-nowrap z-10 pointer-events-none 
+                    ${
+                      isTooltipExiting
+                        ? "animate-tooltip-fade-out"
+                        : "animate-tooltip-bounce-in"
+                    }`}
+                >
+                  {tooltipText}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                    <div className="border-4 border-transparent border-t-gray-800"></div>
+                  </div>
+                </div>
+              )}
+            </button>
           </div>
         </div>
       </div>
-      {(response?.sale_cycle.total_amount ?? 0) > 0 ? (
-        <Button
-          icon={<img src="/icon-bearhouse-2.png" alt="icon" />}
-          text="ยืนยันการปิดรอบการขาย"
-          onClick={onCloseSaleCycle}
-          className="mt-3"
-        />
-      ) : (
-        <div className="text-xl mt-2">
-          *ไม่สามารถปิดยอดการขายได้เนื่องจากยอดเป็น 0
-        </div>
-      )}
 
-      {(response?.sale_cycle.total_amount ?? 0) > 0 && (
-        <>
-          <div className="text-3xl mt-5">รายการทั้งหมด</div>
-          <div className="flex mb-4 text-xl">
-            <IconAlertSmall /> รายการที่ถูกปิดรอบการขายไปแล้วจะไม่นำมาคิด
-          </div>
+      {/* Sale Orders List */}
+      {saleOrder && saleOrder.length > 0 && (
+        <div>
+          <div className="text-3xl mb-3">รายการทั้งหมด</div>
           <div className="mt-3 flex flex-col gap-3">
-            {response?.sale_orders.map((saleOrder) => {
-              const isExpanded = expandedOrders.has(saleOrder.id);
-              const details = orderDetails[saleOrder.id];
+            {saleOrder.map((order) => {
+              const isExpanded = expandedOrders.has(order.id);
+              const details = orderDetails[order.id];
 
               return (
                 <div
-                  key={saleOrder.id}
+                  key={order.id}
                   className="bg-white p-4 rounded-md shadow-md w-full transition-all duration-300"
                 >
                   <div
                     className="flex justify-between cursor-pointer"
-                    onClick={() => toggleOrderExpansion(saleOrder.id)}
+                    onClick={() => toggleOrderExpansion(order.id)}
                   >
                     <div>
                       <div className="text-md text-gray-400">
-                        {saleOrder.payment_type.split("_").join(" ")}
+                        {order.payment_type.split("_").join(" ")}
                       </div>
                       <div className="text-xl flex items-center gap-2">
-                        <div>{saleOrder.number}</div>
-                        {saleOrder.status !== "draft" && (
+                        <div>{order.number}</div>
+                        {order.status !== "draft" && (
                           <div
                             className={`px-3 h-5 rounded-md text-sm flex items-center ${
-                              statusDisplay[saleOrder.status].className
+                              statusDisplay[order.status].className
                             }`}
                           >
-                            {statusDisplay[saleOrder.status].label}
+                            {statusDisplay[order.status].label}
                           </div>
                         )}
                       </div>
@@ -193,11 +275,11 @@ export default function Page() {
                     <div className="flex items-center gap-3">
                       <div className="flex flex-col items-end justify-end">
                         <div className="text-md text-gray-400">
-                          {formatTime(saleOrder.created_at)}
+                          {formatTime(order.created_at)}
                         </div>
                         <div className="text-xl">
                           ฿
-                          {saleOrder.total_amount.toLocaleString("th-TH", {
+                          {order.total_amount.toLocaleString("th-TH", {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })}
@@ -274,7 +356,7 @@ export default function Page() {
               );
             })}
           </div>
-        </>
+        </div>
       )}
     </div>
   );
